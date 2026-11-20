@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="kn">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Mannu · Community & Market</title>
+  <meta name="theme-color" content="#0f682b">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="mannu-shell.css">
+  <style>
+    .post-card {
+      border: 1px solid var(--bd);
+      border-radius: 14px;
+      padding: 12px;
+      margin: 10px 0;
+      background: #fff;
+    }
+
+    .post-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .match-box {
+      background: var(--g-light);
+      border: 1px solid var(--g);
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .tbl-wrap {
+      overflow-x: auto;
+    }
+
+    table.m-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    table.m-tbl th,
+    table.m-tbl td {
+      border: 1px solid var(--bd);
+      padding: 7px 8px;
+      text-align: left;
+    }
+
+    table.m-tbl th {
+      background: var(--g-light);
+      color: var(--g);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="m-header">
+    <a class="m-hdr-btn m-home-btn" href="index.html" data-nav-home="short">🏠 ಮುಖಪುಟ</a>
+    <h1>Mannu <small id="comm-hdr-sub">ಕೃಷಿ ಸಮುದಾಯ ಮತ್ತು ಮಾರುಕಟ್ಟೆ</small></h1>
+    <span class="m-net-pill" id="netStatus"></span>
+    <button class="m-hdr-btn" id="langBtn">English</button>
+  </header>
+
+  <main class="m-main">
+    <div class="m-page-intro">
+      <div class="m-page-intro-ico" id="comm-intro-ico" aria-hidden="true">🤝</div>
+      <div>
+        <h2 id="comm-intro-title">ರೈತರ ಸಮುದಾಯ ಚರ್ಚೆ</h2>
+        <p id="comm-intro-desc">ಇತರ ರೈತರೊಂದಿಗೆ ಕೃಷಿ ಮಾಹಿತಿ ಮತ್ತು ಅನುಭವ ಹಂಚಿಕೊಳ್ಳಿ.</p>
+      </div>
+    </div>
+
+    <!-- VIEW 1: COMMUNITY FEED -->
+    <div id="view-feed" class="tab-view m-hidden">
+      <section class="m-card">
+        <h2>✍️ <span data-i18n="newPostTitle">ಸಮುದಾಯದಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ</span></h2>
+        <div class="m-row">
+          <div>
+            <label class="m-lbl" data-i18n="lblCat">ವಿಭಾಗ</label>
+            <select class="m-input" id="post-cat">
+              <option value="selling" data-i18n="catSell">🌾 ಮಾರಾಟಕ್ಕೆ ಲಭ್ಯ</option>
+              <option value="buying" data-i18n="catBuy">🛒 ಖರೀದಿ ಬೇಡಿಕೆ</option>
+              <option value="inputs" data-i18n="catInput">🌱 ಬೀಜ / ಗೊಬ್ಬರ</option>
+              <option value="discussion" data-i18n="catDisc">💬 ರೈತರ ಚರ್ಚೆ</option>
+              <option value="opportunities" data-i18n="catOpp">🤝 FPO ಅವಕಾಶಗಳು</option>
+            </select>
+          </div>
+          <div>
+            <label class="m-lbl" data-i18n="lblLoc">ಸ್ಥಳ</label>
+            <input type="text" class="m-input" id="post-loc" data-i18n-ph="phLoc" placeholder="ಉದಾ: ತುಮಕೂರು">
+          </div>
+        </div>
+        <label class="m-lbl" data-i18n="lblMsg">ಸಂದೇಶ</label>
+        <textarea class="m-input" id="post-content" rows="2" data-i18n-ph="phPost"
+          placeholder="ನಿಮ್ಮ ಕೃಷಿ ಮಾಹಿತಿ ಬರೆಯಿರಿ..."></textarea>
+        <button class="m-btn m-btn-primary m-btn-full" id="btn-post-submit" style="margin-top:10px"
+          data-i18n="btnPublish">🚀 ಪ್ರಕಟಿಸಿ</button>
+      </section>
+
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px" id="feed-filters">
+        <button class="m-btn active" data-f="all" style="min-height:36px;font-size:13px" data-i18n="fAll">ಎಲ್ಲಾ</button>
+        <button class="m-btn" data-f="selling" style="min-height:36px;font-size:13px" data-i18n="catSell">🌾
+          ಮಾರಾಟ</button>
+        <button class="m-btn" data-f="buying" style="min-height:36px;font-size:13px" data-i18n="catBuy">🛒
+          ಖರೀದಿ</button>
+        <button class="m-btn" data-f="inputs" style="min-height:36px;font-size:13px" data-i18n="catInput">🌱
+          ಬೀಜ/ಗೊಬ್ಬರ</button>
+        <button class="m-btn" data-f="discussion" style="min-height:36px;font-size:13px" data-i18n="catDisc">💬
+          ಚರ್ಚೆ</button>
+      </div>
+      <div id="posts-host"></div>
+    </div>
+
+    <!-- TAB 2: PRODUCE & INPUT MARKETPLACE -->
+    <div id="view-market" class="tab-view m-hidden">
+      <div class="m-callout" style="font-size:13px" data-i18n="apmcNotice">
+        ⚖️ ಕರ್ನಾಟಕ APMC ಕಾಯ್ದೆ (2025 ತಿದ್ದುಪಡಿ) ಅನುಸಾರ: ನೇರ ಹಣಕಾಸು ವಹಿವಾಟು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ (regulatedTradeEnabled =
+        false). ಇದು ರೈತರು ಮತ್ತು ಪರವಾನಗಿ ಪಡೆದ ಖರೀದಿದಾರರ ಸಂಪರ್ಕ ವೇದಿಕೆ ಮಾತ್ರ.
+      </div>
+
+      <section class="m-card">
+        <h2>➕ <span data-i18n="mktAddTitle">ಉತ್ಪನ್ನ ಮಾರಾಟ ಅಥವಾ ಖರೀದಿ ಬೇಡಿಕೆ ಪಟ್ಟಿ</span></h2>
+        <div class="m-row">
+          <div>
+            <label class="m-lbl" data-i18n="lblMktMode">ಪಟ್ಟಿ ಪ್ರಕಾರ</label>
+            <select class="m-input" id="mkt-mode">
+              <option value="sell" data-i18n="modeSell">🌾 ನಾನು ಬೆಳೆ ಮಾರುತ್ತಿದ್ದೇನೆ (Supply)</option>
+              <option value="buy" data-i18n="modeBuy">🛒 ನಾನು ಬೆಳೆ ಖರೀದಿಸುತ್ತೇನೆ (Demand)</option>
+            </select>
+          </div>
+          <div>
+            <label class="m-lbl" data-i18n="lblComm">ಬೆಳೆ / ತಳಿ</label>
+            <input type="text" class="m-input" id="mkt-comm" data-i18n-ph="phComm" placeholder="ಉದಾ: ಮೆಕ್ಕೆಜೋಳ">
+          </div>
+        </div>
+        <div class="m-grid-3" style="margin-top:6px">
+          <div>
+            <label class="m-lbl" data-i18n="lblQty">ಪ್ರಮಾಣ</label>
+            <input type="number" class="m-input" id="mkt-qty" value="5" min="0.5" step="0.5">
+          </div>
+          <div>
+            <label class="m-lbl" data-i18n="lblUnit">ಘಟಕ</label>
+            <select class="m-input" id="mkt-unit">
+              <option value="tonnes" data-i18n="uTon">ಟನ್ (Tonnes)</option>
+              <option value="quintal" data-i18n="uQtl">ಕ್ವಿಂಟಾಲ್ (Quintals)</option>
+              <option value="kg" data-i18n="uKg">ಕಿಲೋ (kg)</option>
+            </select>
+          </div>
+          <div>
+            <label class="m-lbl" data-i18n="lblAskPrice">ನಿರೀಕ್ಷಿತ ದರ (₹/ಘಟಕ)</label>
+            <input type="number" class="m-input" id="mkt-price" value="22500">
+          </div>
+        </div>
+        <button class="m-btn m-btn-primary m-btn-full" id="btn-mkt-add" style="margin-top:10px"
+          data-i18n="btnPublishList">ಪಟ್ಟಿ ಪ್ರಕಟಿಸಿ</button>
+      </section>
+
+      <section class="m-card">
+        <h2>🤝 <span data-i18n="lblSupplyMatch">ಲಭ್ಯ ಉತ್ಪನ್ನಗಳು ಮತ್ತು ಖರೀದಿದಾರರ ಹೊಂದಾಣಿಕೆ</span></h2>
+        <div id="listings-host"></div>
+      </section>
+
+      <section class="m-card">
+        <h2>🌱 <span data-i18n="lblInputCompare">ಪರವಾನಗಿ ಪಡೆದ ಬೀಜ & ಗೊಬ್ಬರ ಮಾರಾಟಗಾರರ ಹೋಲಿಕೆ</span></h2>
+        <div class="m-mut" style="margin-bottom:8px" data-i18n="txtNonSponsored">
+          ಸೂಚನೆ: ಬೆಲೆ ಮತ್ತು ಪೋಷಕಾಂಶ ಆಧಾರಿತ ಶ್ರೇಯಾಂಕ — ಯಾವುದೇ ಪಾವತಿಸಿದ ಜಾಹೀರಾತಿಲ್ಲ.
+        </div>
+        <div class="tbl-wrap" id="inputs-table-host"></div>
+      </section>
+    </div>
+
+    <!-- TAB 3: MARKET PRICE INTELLIGENCE -->
+    <div id="view-prices" class="tab-view m-hidden">
+      <section class="m-card">
+        <h2>📊 <span data-i18n="prTitle">ಮಂಡಿ ಬೆಲೆ ಬುದ್ಧಿವಂತಿಕೆ (AGMARKNET / OGD)</span></h2>
+        <div class="m-row">
+          <div>
+            <label class="m-lbl" data-i18n="lblSelCrop">ಬೆಳೆ</label>
+            <select class="m-input" id="pr-crop">
+              <option value="ragi" data-i18n="cRagi">ರಾಗಿ</option>
+              <option value="maize" data-i18n="cMaize">ಮೆಕ್ಕೆಜೋಳ</option>
+              <option value="jowar" data-i18n="cJowar">ಜೋಳ</option>
+              <option value="paddy" data-i18n="cPaddy">ಭತ್ತ</option>
+              <option value="tomato" data-i18n="cTomato">ಟೊಮೇಟೊ</option>
+            </select>
+          </div>
+          <div>
+            <label class="m-lbl" data-i18n="lblMandi">ಮಂಡಿ / ಜಿಲ್ಲೆ</label>
+            <select class="m-input" id="pr-mandi">
+              <option value="Tumakuru">Tumakuru APMC</option>
+              <option value="Bengaluru">Bengaluru APMC</option>
+              <option value="Mysuru">Mysuru APMC</option>
+              <option value="Davanagere">Davanagere APMC</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="m-grid-3" style="margin:12px 0">
+          <div class="m-kpi">
+            <div class="m-kpi-val" id="pr-min">--</div>
+            <div class="m-kpi-lbl" data-i18n="lblMinPr">ಕನಿಷ್ಠ (₹/qtl)</div>
+          </div>
+          <div class="m-kpi" style="border-color:var(--g);background:var(--g-light)">
+            <div class="m-kpi-val" id="pr-modal">--</div>
+            <div class="m-kpi-lbl" data-i18n="lblModalPr">ಮಾದರಿ ದರ (₹/qtl)</div>
+          </div>
+          <div class="m-kpi">
+            <div class="m-kpi-val" id="pr-max">--</div>
+            <div class="m-kpi-lbl" data-i18n="lblMaxPr">ಗರಿಷ್ಠ (₹/qtl)</div>
+          </div>
+        </div>
+        <div class="m-callout m-callout-info" id="pr-msp-note" style="font-size:13px"></div>
+
+        <!-- Historical + Forecast SVG Chart -->
+        <div id="pr-chart-host" style="margin:10px 0"></div>
+        <div id="pr-forecast-box" class="m-callout m-callout-ok" style="font-size:13px"></div>
+      </section>
+    </div>
+
+    <!-- VIEW 4: VERIFIED AGRICULTURAL NEWS -->
+    <div id="view-news" class="tab-view m-hidden">
+      <section class="m-card">
+        <h2>🏛️ <span data-i18n="newsTitle">ಅಧಿಕೃತ ಸರ್ಕಾರಿ ಪ್ರಕಟಣೆಗಳು ಮತ್ತು MSP</span></h2>
+        <div class="m-mut" style="margin-bottom:8px" data-i18n="newsDistinction">
+          ಇವು ಅಧಿಕೃತ ಸರ್ಕಾರಿ / IMD ಮೂಲಗಳಿಂದ ಪಡೆದ ಮಾಹಿತಿಗಳಾಗಿವೆ (ಸಮುದಾಯ ಚರ್ಚೆಗಿಂತ ಪ್ರತ್ಯೇಕ).
+        </div>
+        <div id="news-host"></div>
+      </section>
+    </div>
+
+    <div class="m-back-home-footer">
+      <p data-nav-home="hint">ಮತ್ತೊಂದು ಸೇವೆಯನ್ನು ಬಳಸಲು ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ.</p>
+      <a class="m-btn m-btn-primary m-btn-full" href="index.html" data-nav-home="long">🏠 ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ</a>
+    </div>
+  </main>
+
+  <script type="module" src="community.mjs"></script>
+  <script src="mannu-assistant.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="kn">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Mannu · Reports & Logbook</title>
+  <meta name="theme-color" content="#0f682b">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="mannu-shell.css">
+  <style>
+    .rep-doc {
+      background: #fff;
+      border: 1.5px solid #a7f3d0;
+      border-radius: 16px;
+      padding: 18px;
+      margin: 12px 0;
+      box-shadow: var(--shadow);
+    }
+
+    .rep-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2.5px solid var(--g);
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .rep-sec {
+      padding: 12px 0;
+      border-bottom: 1px dashed #d1d5db;
+    }
+
+    .rep-sec:last-child {
+      border-bottom: none;
+    }
+
+    .rep-sec h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: var(--g);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tl-row {
+      display: flex;
+      gap: 10px;
+      padding: 6px 0 6px 12px;
+      border-left: 2.5px solid var(--g-mid);
+      position: relative;
+      font-size: 14px;
+    }
+
+    .tl-row::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 10px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--g);
+    }
+
+    .log-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--bd);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      background: #f9fafb;
+      cursor: pointer;
+    }
+
+    .log-row:hover {
+      background: var(--g-light);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="m-header">
+    <a class="m-hdr-btn m-home-btn" href="index.html" data-nav-home="short">🏠 ಮುಖಪುಟ</a>
+    <h1>Mannu <small data-i18n="headerSub">ದೈನಂದಿನ ವರದಿ ಮತ್ತು ದಿನಚರಿ</small></h1>
+    <span class="m-net-pill" id="netStatus"></span>
+    <button class="m-hdr-btn" id="langBtn">English</button>
+  </header>
+
+  <main class="m-main">
+    <div class="m-page-intro no-print">
+      <div class="m-page-intro-ico" aria-hidden="true">📋</div>
+      <div>
+        <h2 data-i18n="genTitle">ದೈನಂದಿನ ವರದಿ ತಯಾರಿಸಿ</h2>
+        <p data-i18n="introDesc">ದೈನಂದಿನ ಕೃಷಿ ಚಟುವಟಿಕೆ ದಾಖಲಿಸಿ, ಪೂರ್ಣ ವರದಿ ತಯಾರಿಸಿ, PDF ಉಳಿಸಿ ಅಥವಾ Gmail ಮೂಲಕ ಕಳುಹಿಸಿ.</p>
+      </div>
+    </div>
+    <!-- Quick Log Field Activity -->
+    <section class="m-card no-print">
+      <h2>✍️ <span data-i18n="logActTitle">ಇಂದಿನ ಕೃಷಿ ಚಟುವಟಿಕೆ ದಾಖಲಿಸಿ</span></h2>
+      <div class="m-row">
+        <div>
+          <label class="m-lbl" data-i18n="lblActType">ಚಟುವಟಿಕೆ ಪ್ರಕಾರ</label>
+          <select class="m-input" id="act-type">
+            <option value="irrigation" data-i18n="actIrr">💧 ನೀರಾವರಿ ನೀಡಲಾಗಿದೆ</option>
+            <option value="fertiliser_applied" data-i18n="actFert">🌱 ಗೊಬ್ಬರ ಹಾಕಲಾಗಿದೆ</option>
+            <option value="crop_inspection" data-i18n="actInsp">🌿 ಬೆಳೆ ಪರಿಶೀಲನೆ</option>
+            <option value="soil_test" data-i18n="actSoil">🔬 ಮಣ್ಣು ಪರೀಕ್ಷೆ</option>
+          </select>
+        </div>
+        <div>
+          <label class="m-lbl" data-i18n="lblActNote">ಟಿಪ್ಪಣಿ</label>
+          <input type="text" class="m-input" id="act-note" data-i18n-ph="phActNote"
+            placeholder="ಉದಾ: ಬೆಳಿಗ್ಗೆ 2 ಗಂಟೆ ನೀರು ಹರಿಸಲಾಗಿದೆ">
+        </div>
+      </div>
+      <button class="m-btn m-btn-sec m-btn-full" id="btn-log-act" style="margin-top:10px" data-i18n="btnLogAct">+
+        ದಿನಚರಿಗೆ ಸೇರಿಸಿ</button>
+    </section>
+
+    <!-- Report Generator Controls -->
+    <section class="m-card no-print">
+      <h2>📋 <span data-i18n="genTitle">ದೈನಂದಿನ ವರದಿ ತಯಾರಿಸಿ</span></h2>
+      <div class="m-grid-3">
+        <div>
+          <label class="m-lbl" data-i18n="lblDate">ದಿನಾಂಕ</label>
+          <input type="date" class="m-input" id="rep-date">
+        </div>
+        <div>
+          <label class="m-lbl" data-i18n="lblPlot">ಜಮೀನು</label>
+          <select class="m-input" id="rep-plot"></select>
+        </div>
+        <div>
+          <label class="m-lbl" data-i18n="lblRepLang">ವರದಿ ಭಾಷೆ</label>
+          <select class="m-input" id="rep-lang">
+            <option value="kn">ಕನ್ನಡ</option>
+            <option value="en">English</option>
+            <option value="hi">हिंदी (Hindi)</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+          </select>
+        </div>
+      </div>
+      <button class="m-btn m-btn-primary m-btn-full" id="btn-generate" style="margin-top:12px">⚡ <span
+          data-i18n="btnGenerate">ಪೂರ್ಣ ವರದಿ ರಚಿಸಿ</span></button>
+    </section>
+
+    <!-- 8-Section Generated Report Document -->
+    <div id="report-container" class="m-hidden">
+      <div class="rep-doc" id="rep-doc"></div>
+
+      <div class="m-card no-print">
+        <div class="m-row">
+          <button class="m-btn m-btn-primary" id="btn-print-pdf">🖨️ <span data-i18n="btnPdf">PDF ಉಳಿಸಿ /
+              ಪ್ರಿಂಟ್</span></button>
+          <button class="m-btn m-btn-sec" id="btn-audio-rep">🔊 <span data-i18n="btnAudioRep">ಧ್ವನಿ
+              ವಿವರಣೆ</span></button>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+          <label class="m-lbl" data-i18n="lblEmailTo">ಇಮೇಲ್ ವಿಳಾಸಗಳು (ಬಹು ವಿಳಾಸಗಳಿಗೆ ಅಲ್ಪವಿರಾಮ ಬಳಸಿ)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="text" class="m-input" id="rep-email" style="flex:1;min-width:240px"
+              placeholder="farmer1@example.com, agronomist@kvk.in">
+            <button class="m-btn m-btn-warn" id="btn-send-gmail" style="white-space:nowrap">✉️ <span
+                data-i18n="btnGmail">Send via Server</span></button>
+            <button class="m-btn m-btn-sec" id="btn-open-gmail-web" style="white-space:nowrap">🌐 <span
+                data-i18n="btnGmailWeb">Open in Gmail Web</span></button>
+          </div>
+          <div id="gmail-status" class="m-mut" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Searchable Digital Logbook Archive -->
+    <section class="m-card no-print">
+      <h2>📖 <span data-i18n="logbookTitle">ಡಿಜಿಟಲ್ ಕೃಷಿ ದಿನಚರಿ (Logbook)</span></h2>
+      <div id="logbook-list"></div>
+    </section>
+
+    <div class="m-back-home-footer no-print">
+      <p data-nav-home="hint">ಮತ್ತೊಂದು ಸೇವೆಯನ್ನು ಬಳಸಲು ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ.</p>
+      <a class="m-btn m-btn-primary m-btn-full" href="index.html" data-nav-home="long">🏠 ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ</a>
+    </div>
+  </main>
+
+  <script type="module" src="reports.mjs"></script>
+  <script src="mannu-assistant.js"></script>
+</body>
+
+</html>

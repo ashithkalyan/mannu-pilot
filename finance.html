@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="kn">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Mannu · Farm Finance Simulator</title>
+  <meta name="theme-color" content="#0f682b">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="mannu-shell.css">
+  <style>
+    .scen-strip {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 6px 0;
+    }
+
+    .scen-btn {
+      flex-shrink: 0;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1.5px solid var(--bd);
+      background: #fff;
+      color: var(--tx);
+      cursor: pointer;
+    }
+
+    .scen-btn.active {
+      background: var(--g);
+      color: #fff;
+      border-color: var(--g);
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 480px) {
+      .cal-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .cal-box {
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 12px;
+      background: #fff;
+    }
+
+    .cal-box.peak {
+      border-color: var(--r);
+      background: var(--r-light);
+    }
+
+    .cal-box.harvest {
+      border-color: var(--g);
+      background: var(--g-light);
+    }
+
+    table.m-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    table.m-tbl th,
+    table.m-tbl td {
+      border: 1px solid var(--bd);
+      padding: 7px 6px;
+      text-align: right;
+    }
+
+    table.m-tbl th {
+      background: var(--g-light);
+      color: var(--g);
+      text-align: center;
+    }
+
+    table.m-tbl td:first-child {
+      text-align: left;
+      font-weight: 700;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="m-header">
+    <a class="m-hdr-btn m-home-btn" href="index.html" data-nav-home="short">🏠 ಮುಖಪುಟ</a>
+    <h1>Mannu <small data-i18n="headerSub">ಆರ್ಥಿಕ ಅಪಾಯ ಸಿಮ್ಯುಲೇಟರ್ ಮತ್ತು ವಾರ್ಷಿಕ ಯೋಜನೆ</small></h1>
+    <span class="m-net-pill" id="netStatus"></span>
+    <button class="m-hdr-btn" id="langBtn">English</button>
+  </header>
+
+  <main class="m-main">
+    <div class="m-page-intro">
+      <div class="m-page-intro-ico" aria-hidden="true">💰</div>
+      <div>
+        <h2 data-i18n="headerSub">ಆರ್ಥಿಕ ಅಪಾಯ ಸಿಮ್ಯುಲೇಟರ್ ಮತ್ತು ವಾರ್ಷಿಕ ಯೋಜನೆ</h2>
+        <p data-i18n="introDesc">ಬೆಳೆ ವೆಚ್ಚ, ಬ್ರೇಕ್-ಈವನ್ ಬೆಲೆ, ಲಾಭದ ಅಂದಾಜು ಮತ್ತು 12 ತಿಂಗಳ ನಗದು ಹರಿವನ್ನು ಸುಲಭವಾಗಿ ಲೆಕ್ಕ ಹಾಕಿ.</p>
+      </div>
+    </div>
+    <!-- Farm Profile & Crop Setup -->
+    <section class="m-card">
+      <h2>🌾 <span data-i18n="s1Title">1. ಜಮೀನು, ಬೆಳೆ ಮತ್ತು ಬಜೆಟ್ ವಿವರ</span></h2>
+      <div class="m-row">
+        <div>
+          <label class="m-lbl" data-i18n="lblPlot">ನೋಂದಾಯಿತ ಜಮೀನು</label>
+          <select class="m-input" id="fin-plot"></select>
+        </div>
+        <div>
+          <label class="m-lbl" data-i18n="lblCrop">ಬೆಳೆ</label>
+          <select class="m-input" id="fin-crop">
+            <option value="ragi" data-i18n="cRagi">ರಾಗಿ</option>
+            <option value="maize" data-i18n="cMaize">ಮೆಕ್ಕೆಜೋಳ</option>
+            <option value="jowar" data-i18n="cJowar">ಜೋಳ</option>
+            <option value="paddy" data-i18n="cPaddy">ಭತ್ತ</option>
+            <option value="tomato" data-i18n="cTomato">ಟೊಮೇಟೊ</option>
+          </select>
+        </div>
+      </div>
+      <div class="m-grid-3" style="margin-top:6px">
+        <div>
+          <label class="m-lbl" data-i18n="lblAcres">ವಿಸ್ತೀರ್ಣ (ಎಕರೆ)</label>
+          <input type="number" class="m-input" id="fin-acres" value="1.5" min="0.25" step="0.25">
+        </div>
+        <div>
+          <label class="m-lbl" data-i18n="lblBudget">ಲಭ್ಯ ಬಂಡವಾಳ (₹)</label>
+          <input type="number" class="m-input" id="fin-budget" value="25000" min="0">
+        </div>
+        <div>
+          <label class="m-lbl" data-i18n="lblCostBasis">ವೆಚ್ಚದ ಆಧಾರ</label>
+          <select class="m-input" id="fin-basis">
+            <option value="cash" data-i18n="bCash">ನಗದು ವೆಚ್ಚ (Paid-out)</option>
+            <option value="a2fl" data-i18n="bA2fl">A2 + ಕುಟುಂಬ ಶ್ರಮ</option>
+            <option value="c2" data-i18n="bC2">C2 (ಭೂಮಿ ಬಾಡಿಗೆ ಸಹಿತ)</option>
+          </select>
+        </div>
+      </div>
+      <div class="m-callout m-callout-ok" id="dose-sync-note" style="font-size:13px;margin-top:8px"></div>
+    </section>
+
+    <!-- Cultivation Cost Breakdown -->
+    <section class="m-card">
+      <h2>💰 <span data-i18n="s2Title">2. ಪ್ರತಿ ಎಕರೆ ಕೃಷಿ ವೆಚ್ಚ (₹/ಎಕರೆ)</span></h2>
+      <div class="m-grid-3">
+        <div><label class="m-lbl" data-i18n="cSeed">ಬಿತ್ತನೆ ಬೀಜ</label><input type="number" class="m-input" id="c-seed"
+            value="650"></div>
+        <div><label class="m-lbl" data-i18n="cFert">ಗೊಬ್ಬರ (UAS ಲೆಕ್ಕ)</label><input type="number" class="m-input"
+            id="c-fert" value="2850"></div>
+        <div><label class="m-lbl" data-i18n="cLab">ಕೂಲಿ ಮತ್ತು ಉಳುಮೆ</label><input type="number" class="m-input"
+            id="c-lab" value="4800"></div>
+        <div><label class="m-lbl" data-i18n="cMach">ಯಂತ್ರ ಮತ್ತು ನೀರಾವರಿ</label><input type="number" class="m-input"
+            id="c-mach" value="2000"></div>
+        <div><label class="m-lbl" data-i18n="cHarv">ಕಟಾವು ಮತ್ತು ಸಾಗಾಣಿಕೆ</label><input type="number" class="m-input"
+            id="c-harv" value="2200"></div>
+        <div><label class="m-lbl" data-i18n="cOther">ಇತರೆ / ಆಕಸ್ಮಿಕ</label><input type="number" class="m-input"
+            id="c-other" value="800"></div>
+      </div>
+
+      <h3 data-i18n="s3Title">3. ಇಳುವರಿ (kg/ಎಕರೆ) ಮತ್ತು ಮಾರುಕಟ್ಟೆ ದರ (₹/ಕ್ವಿಂಟಾಲ್)</h3>
+      <div class="m-grid-3">
+        <div><label class="m-lbl" data-i18n="yLow">ಕನಿಷ್ಠ ಇಳುವರಿ</label><input type="number" class="m-input" id="y-low"
+            value="800"></div>
+        <div><label class="m-lbl" data-i18n="yBase">ಸಾಮಾನ್ಯ ಇಳುವರಿ</label><input type="number" class="m-input"
+            id="y-base" value="1250"></div>
+        <div><label class="m-lbl" data-i18n="yHigh">ಉತ್ತಮ ಇಳುವರಿ</label><input type="number" class="m-input" id="y-high"
+            value="1600"></div>
+        <div><label class="m-lbl" data-i18n="pLow">ಕನಿಷ್ಠ ಬೆಲೆ</label><input type="number" class="m-input" id="p-low"
+            value="2850"></div>
+        <div><label class="m-lbl" data-i18n="pBase">ಮಾದರಿ ಬೆಲೆ</label><input type="number" class="m-input" id="p-base"
+            value="3420"></div>
+        <div><label class="m-lbl" data-i18n="pHigh">ಗರಿಷ್ಠ ಬೆಲೆ</label><input type="number" class="m-input" id="p-high"
+            value="3800"></div>
+      </div>
+
+      <!-- 8 Stress Scenarios -->
+      <div style="margin-top:10px">
+        <div class="m-mut" data-i18n="lblScenPick">ಅಪಾಯದ ಸನ್ನಿವೇಶ ಪರೀಕ್ಷಿಸಿ:</div>
+        <div class="scen-strip" id="scen-strip">
+          <button class="scen-btn active" data-sc="normal" data-i18n="scNormal">1. ಸಾಮಾನ್ಯ</button>
+          <button class="scen-btn" data-sc="drought" data-i18n="scDrought">2. ಕಡಿಮೆ ಮಳೆ (-30%)</button>
+          <button class="scen-btn" data-sc="flood" data-i18n="scFlood">3. ಅತಿವೃಷ್ಟಿ</button>
+          <button class="scen-btn" data-sc="crash" data-i18n="scCrash">4. ಬೆಲೆ ಕುಸಿತ (-20%)</button>
+          <button class="scen-btn" data-sc="costspike" data-i18n="scSpike">5. ವೆಚ್ಚ ಹೆಚ್ಚಳ (+18%)</button>
+          <button class="scen-btn" data-sc="combined" data-i18n="scComb">6. ಸಂಯುಕ್ತ ಅಪಾಯ</button>
+        </div>
+      </div>
+
+      <button class="m-btn m-btn-primary m-btn-full" id="btn-run-sim" style="margin-top:10px">⚡ <span
+          data-i18n="btnRunSim">ಸಿಮ್ಯುಲೇಶನ್ ಲೆಕ್ಕ ಹಾಕಿ</span></button>
+    </section>
+
+    <!-- Deterministic Simulation Results -->
+    <section class="m-card">
+      <h2>📊 <span data-i18n="s4Title">4. ಆರ್ಥಿಕ ಫಲಿತಾಂಶ ಮತ್ತು ಬ್ರೇಕ್-ಈವನ್</span></h2>
+      <div id="fin-alerts"></div>
+      <div class="m-grid-2" style="margin:10px 0">
+        <div class="m-kpi">
+          <div class="m-kpi-val" id="out-cost">--</div>
+          <div class="m-kpi-lbl" id="out-cost-sub">--</div>
+        </div>
+        <div class="m-kpi">
+          <div class="m-kpi-val" id="out-net">--</div>
+          <div class="m-kpi-lbl" id="out-roi">--</div>
+        </div>
+        <div class="m-kpi" style="border-color:var(--b)">
+          <div class="m-kpi-val" id="out-bep" style="color:var(--b)">--</div>
+          <div class="m-kpi-lbl" data-i18n="lblBep">ಬ್ರೇಕ್-ಈವನ್ ಬೆಲೆ (₹/qtl)</div>
+        </div>
+        <div class="m-kpi" style="border-color:var(--y)">
+          <div class="m-kpi-val" id="out-bey" style="color:var(--y)">--</div>
+          <div class="m-kpi-lbl" data-i18n="lblBey">ಬ್ರೇಕ್-ಈವನ್ ಇಳುವರಿ (kg/ac)</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto" id="scen-table-host"></div>
+      <div class="m-callout m-callout-info" id="fin-roadmap-box" style="margin-top:10px;font-size:13px"></div>
+    </section>
+
+    <!-- Multi-Crop Comparison Table -->
+    <section class="m-card">
+      <h2>⚖️ <span data-i18n="s5Title">5. ಪರ್ಯಾಯ ಬೆಳೆಗಳ ಹೋಲಿಕೆ (ಒಂದೇ ಜಮೀನಿಗೆ)</span></h2>
+      <div style="overflow-x:auto" id="crop-compare-host"></div>
+    </section>
+
+    <!-- 12-Month Annual Cashflow Planner -->
+    <section class="m-card">
+      <h2>📅 <span data-i18n="s6Title">6. ವಾರ್ಷಿಕ 12-ತಿಂಗಳ ನಗದು ಹರಿವು (Kharif + Rabi)</span></h2>
+      <div class="m-mut" data-i18n="calNote">ಕೆಂಪು ಅಂಚು = ಗರಿಷ್ಠ ಬಂಡವಾಳ ಅಗತ್ಯ ತಿಂಗಳು · ಹಸಿರು = ಕಟಾವು ಆದಾಯ ತಿಂಗಳು</div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </section>
+
+    <!-- Planned vs Actual Outcome Tracker -->
+    <section class="m-card">
+      <h2>📝 <span data-i18n="s7Title">7. ನಿರೀಕ್ಷಿತ vs ನೈಜ ಫಲಿತಾಂಶ ದಾಖಲೆ</span></h2>
+      <div class="m-grid-3">
+        <div><label class="m-lbl" data-i18n="lblActCost">ನೈಜ ವೆಚ್ಚ (₹)</label><input type="number" class="m-input"
+            id="act-cost" placeholder="19500"></div>
+        <div><label class="m-lbl" data-i18n="lblActYield">ನೈಜ ಇಳುವರಿ (ಒಟ್ಟು kg)</label><input type="number"
+            class="m-input" id="act-yield" placeholder="1800"></div>
+        <div><label class="m-lbl" data-i18n="lblActPrice">ಮಾರಾಟ ದರ (₹/qtl)</label><input type="number" class="m-input"
+            id="act-price" placeholder="3500"></div>
+      </div>
+      <button class="m-btn m-btn-sec m-btn-full" id="btn-save-outcome" style="margin-top:10px"
+        data-i18n="btnSaveOutcome">💾 ಯೋಜನೆ ಮತ್ತು ನೈಜ ಫಲಿತಾಂಶ ಹೋಲಿಸಿ ಉಳಿಸಿ</button>
+      <div id="outcome-diff" class="m-mut" style="margin-top:8px"></div>
+    </section>
+
+    <div class="m-back-home-footer">
+      <p data-nav-home="hint">ಮತ್ತೊಂದು ಸೇವೆಯನ್ನು ಬಳಸಲು ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ.</p>
+      <a class="m-btn m-btn-primary m-btn-full" href="index.html" data-nav-home="long">🏠 ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ</a>
+    </div>
+  </main>
+
+  <script type="module" src="finance.mjs"></script>
+  <script src="mannu-assistant.js"></script>
+</body>
+
+</html>

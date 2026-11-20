@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="kn">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Mannu · Farmland Digital Twin</title>
+  <meta name="theme-color" content="#0f682b">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="mannu-shell.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    .map-box {
+      width: 100%;
+      height: 360px;
+      border-radius: 14px;
+      border: 1.5px solid var(--bd);
+      overflow: hidden;
+      position: relative;
+      background: #e5ece7;
+    }
+
+    .walk-map-box {
+      height: 290px;
+    }
+
+    .layer-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    @media (max-width: 520px) {
+      .layer-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .layer-btn {
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 6px;
+      min-height: 44px;
+      border-radius: 10px;
+      border: 1.5px solid var(--bd);
+      background: #fff;
+      color: var(--tx);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .layer-btn.active {
+      background: var(--g);
+      color: #fff;
+      border-color: var(--g);
+    }
+
+    .legend-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      margin: 8px 0;
+      padding: 8px 10px;
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      border-radius: 3px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    .plot-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1.5px solid var(--bd);
+      background: #f9fafb;
+      cursor: pointer;
+      margin: 6px 0;
+    }
+
+    .plot-pill.active {
+      border-color: var(--g);
+      background: var(--g-light);
+    }
+
+    .zone-lbl {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #1f2937;
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #111827;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .stepper {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 6px;
+    }
+
+    .step-chip {
+      flex: 1;
+      text-align: center;
+      padding: 6px 4px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #f3f4f6;
+      color: var(--mut);
+    }
+
+    .step-chip.active {
+      background: var(--g);
+      color: #fff;
+    }
+
+    .step-chip.done {
+      background: var(--g-light);
+      color: var(--g);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 720px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-radius: 20px 20px 0 0;
+      padding: 18px;
+      box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="m-header">
+    <a class="m-hdr-btn m-home-btn" href="index.html" data-nav-home="short">🏠 ಮುಖಪುಟ</a>
+    <h1>Mannu <small data-i18n="headerSub">ಜಮೀನು ಡಿಜಿಟಲ್ ಟ್ವಿನ್</small></h1>
+    <span class="m-net-pill" id="netStatus"></span>
+    <button class="m-hdr-btn" id="langBtn">English</button>
+  </header>
+
+  <main class="m-main">
+    <div class="m-page-intro">
+      <div class="m-page-intro-ico" aria-hidden="true">🗺️</div>
+      <div>
+        <h2 data-i18n="twinTitle">ಜಮೀನಿನ ಡಿಜಿಟಲ್ ಟ್ವಿನ್</h2>
+        <p data-i18n="introDesc">ನಿಮ್ಮ ಜಮೀನಿನ ಗಡಿಯನ್ನು ನಕ್ಷೆಯಲ್ಲಿ ಗುರುತಿಸಿ ಮತ್ತು ಪ್ರತಿ ವಲಯದ ಮಣ್ಣು ಹಾಗೂ ನೀರಿನ ಸ್ಥಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಿ.</p>
+      </div>
+    </div>
+    <!-- Active Farmland Digital Twin Dashboard -->
+    <section class="m-card" id="sec-dashboard">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <h2 style="margin:0">🗺️ <span data-i18n="twinTitle">ಜಮೀನಿನ ಡಿಜಿಟಲ್ ಟ್ವಿನ್</span></h2>
+        <button class="m-btn m-btn-primary" id="btn-new-plot" style="min-height:42px;padding:6px 12px;font-size:14px">
+          + <span data-i18n="btnNewPlot">ಹೊಸ ಜಮೀನು ನಕ್ಷೆ</span>
+        </button>
+      </div>
+
+      <!-- Plot Selector & Coverage Summary -->
+      <div id="plot-selector-list"></div>
+
+      <div class="m-grid-3" style="margin:10px 0" id="plot-kpis">
+        <div class="m-kpi">
+          <div class="m-kpi-val" id="kpi-area">--</div>
+          <div class="m-kpi-lbl" data-i18n="lblArea">ವಿಸ್ತೀರ್ಣ</div>
+        </div>
+        <div class="m-kpi">
+          <div class="m-kpi-val" id="kpi-cov">--</div>
+          <div class="m-kpi-lbl" data-i18n="lblCoverage">ಮಾಪನ ವ್ಯಾಪ್ತಿ</div>
+        </div>
+        <div class="m-kpi">
+          <div class="m-kpi-val" id="kpi-ver">v1</div>
+          <div class="m-kpi-lbl" data-i18n="lblVersion">ಗಡಿ ಆವೃತ್ತಿ</div>
+        </div>
+      </div>
+
+      <!-- 4 Interconnected Spatial Intelligence Layers -->
+      <div class="layer-strip" id="layer-btns">
+        <button class="layer-btn active" data-layer="overall">📊 <span data-i18n="layerOverall">ಒಟ್ಟಾರೆ</span></button>
+        <button class="layer-btn" data-layer="water">💧 <span data-i18n="layerWater">ನೀರು</span></button>
+        <button class="layer-btn" data-layer="nutrient">🌿 <span data-i18n="layerNutrient">ಪೋಷಕಾಂಶ</span></button>
+        <button class="layer-btn" data-layer="crophealth">🌾 <span data-i18n="layerCrop">ಬೆಳೆ ಆರೋಗ್ಯ</span></button>
+      </div>
+
+      <!-- Nutrient Parameter Filter (only visible on Nutrient layer) -->
+      <div id="nutrient-param-bar" class="m-hidden" style="margin:8px 0">
+        <label class="m-lbl" data-i18n="lblSelectNutrient">ಪೋಷಕಾಂಶ ಆಯ್ಕೆಮಾಡಿ</label>
+        <select class="m-input" id="nutrient-param-select" style="min-height:42px">
+          <option value="NO3_N" data-i18n="optNO3">ನೈಟ್ರೇಟ್ (NO₃-N · mg/kg)</option>
+          <option value="N" data-i18n="optN">ಲಭ್ಯ ಸಾರಜನಕ (Available N · kg/ha)</option>
+          <option value="P" data-i18n="optP">ರಂಜಕ (Available P₂O₅ · kg/ha)</option>
+          <option value="K" data-i18n="optK">ಪೊಟ್ಯಾಶ್ (Available K₂O · kg/ha)</option>
+          <option value="pH" data-i18n="optPH">ಮಣ್ಣಿನ pH</option>
+          <option value="EC" data-i18n="optEC">ಲವಣಾಂಶ (EC · dS/m)</option>
+        </select>
+      </div>
+
+      <!-- Layer Notice Banner -->
+      <div class="m-callout m-callout-info" id="layer-notice" style="font-size:13px"></div>
+
+      <!-- Interactive Satellite Map (Always Visible!) -->
+      <div class="map-box" id="twin-map"></div>
+
+      <!-- Layer Legend -->
+      <div class="legend-row" id="layer-legend"></div>
+
+      <!-- Crop & History Bar -->
+      <div class="m-row" style="margin-top:8px">
+        <div>
+          <label class="m-lbl" data-i18n="lblActiveCrop">ಪ್ರಸ್ತುತ ಬೆಳೆ</label>
+          <select class="m-input" id="twin-crop-select" style="min-height:42px">
+            <option value="ragi" data-i18n="cropRagi">ರಾಗಿ</option>
+            <option value="maize" data-i18n="cropMaize">ಮೆಕ್ಕೆಜೋಳ</option>
+            <option value="tomato" data-i18n="cropTomato">ಟೊಮೇಟೊ</option>
+          </select>
+        </div>
+        <div>
+          <label class="m-lbl" data-i18n="lblZoneDensity">ವಲಯ ಗಾತ್ರ (m²)</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" class="m-input" id="twin-zone-size" value="900" min="100" max="5000" step="100"
+              style="min-height:42px">
+            <button class="m-btn m-btn-sec" id="btn-resegment" style="min-height:42px;white-space:nowrap"
+              data-i18n="btnResegment">ವಿಭಜಿಸಿ</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- New Farmland Boundary Capture Workflow (Shown when + Map New Plot clicked) -->
+    <section class="m-card m-hidden" id="sec-workflow">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <h2 style="margin:0">📍 <span data-i18n="wfTitle">ಹೊಸ ಜಮೀನು ಗಡಿ ದಾಖಲಾತಿ</span></h2>
+        <button class="m-btn" id="btn-cancel-wf" style="min-height:38px;padding:4px 10px"
+          data-i18n="btnCancel">ರದ್ದುಮಾಡಿ</button>
+      </div>
+
+      <div class="stepper">
+        <div class="step-chip active" id="st-1" data-i18n="stName">1. ಹೆಸರು</div>
+        <div class="step-chip" id="st-2" data-i18n="stWalk">2. GPS ನಡಿಗೆ</div>
+        <div class="step-chip" id="st-3" data-i18n="stReview">3. ಪರಿಶೀಲನೆ</div>
+      </div>
+
+      <!-- Step 1: Plot Name & Crop -->
+      <div id="wf-step-1">
+        <label class="m-lbl" data-i18n="lblPlotName">ಹೊಲದ ಹೆಸರು</label>
+        <input type="text" class="m-input" id="wf-plot-name" data-i18n-ph="phPlotName" placeholder="ಉದಾ: ಉತ್ತರ ಹೊಲ">
+        <label class="m-lbl" data-i18n="lblSelfArea">ಸ್ವಯಂ-ತಿಳಿಸಿದ ವಿಸ್ತೀರ್ಣ (ಐಚ್ಛಿಕ - ಎಕರೆ)</label>
+        <input type="number" class="m-input" id="wf-self-area" step="0.1" min="0.1" placeholder="1.5">
+        <button class="m-btn m-btn-primary m-btn-full" id="btn-wf-1-next" style="margin-top:12px"
+          data-i18n="btnNextWalk">ಮುಂದೆ: ಗಡಿ ಗುರುತಿಸಿ →</button>
+      </div>
+
+      <!-- Step 2: Walk / Tap Map -->
+      <div id="wf-step-2" class="m-hidden">
+        <div class="m-grid-3" style="margin-bottom:8px">
+          <div class="m-kpi">
+            <div class="m-kpi-val" id="wf-acc">--</div>
+            <div class="m-kpi-lbl" data-i18n="lblGpsAcc">GPS ನಿಖರತೆ</div>
+          </div>
+          <div class="m-kpi">
+            <div class="m-kpi-val" id="wf-pts">0</div>
+            <div class="m-kpi-lbl" data-i18n="lblPoints">ಬಿಂದುಗಳು</div>
+          </div>
+          <div class="m-kpi">
+            <div class="m-kpi-val" id="wf-dist">0 m</div>
+            <div class="m-kpi-lbl" data-i18n="lblPerim">ಸುತ್ತಳತೆ</div>
+          </div>
+        </div>
+        <div class="m-callout m-callout-info" id="wf-gps-msg" style="font-size:13px" data-i18n="msgTapOrWalk">
+          ನಕ್ಷೆಯ ಮೇಲೆ ಮೂಲೆಗಳನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ ಅಥವಾ GPS ನಡಿಗೆ ಪ್ರಾರಂಭಿಸಿ.
+        </div>
+        <div class="map-box walk-map-box" id="walk-map"></div>
+        <div class="m-row" style="margin-top:8px">
+          <button class="m-btn m-btn-primary" id="btn-walk-start" data-i18n="btnStartGps">▶ GPS ಪ್ರಾರಂಭಿಸಿ</button>
+          <button class="m-btn m-btn-warn m-hidden" id="btn-walk-pause" data-i18n="btnPause">⏸ ವಿರಾಮ</button>
+          <button class="m-btn m-btn-sec m-hidden" id="btn-walk-resume" data-i18n="btnResume">▶ ಮುಂದುವರಿಸಿ</button>
+          <button class="m-btn m-btn-danger m-hidden" id="btn-walk-stop" data-i18n="btnFinishPoly">✓ ಗಡಿ
+            ಪೂರ್ಣಗೊಳಿಸಿ</button>
+        </div>
+        <div class="m-row" style="margin-top:6px">
+          <button class="m-btn m-btn-sec" id="btn-wf-sample" data-i18n="btnLoadSample">📍 ಮಾದರಿ ಜಮೀನು</button>
+          <button class="m-btn" id="btn-wf-undo" data-i18n="btnUndoPt">↩ ಹಿಂದಿನ ಬಿಂದು</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Review Geodesic Area & Confirm -->
+      <div id="wf-step-3" class="m-hidden">
+        <div class="m-kpi" style="background:var(--g-light);border-color:var(--g);margin-bottom:10px">
+          <div class="m-kpi-val" id="wf-area-acres">--</div>
+          <div class="m-kpi-lbl" id="wf-area-sub">--</div>
+        </div>
+        <div id="wf-geom-warn" class="m-callout m-callout-err m-hidden"></div>
+        <div class="m-row">
+          <button class="m-btn m-btn-warn" id="btn-wf-redo" data-i18n="btnRedo">↩ ಮತ್ತೆ ಗುರುತಿಸಿ</button>
+          <button class="m-btn m-btn-primary" id="btn-wf-save" data-i18n="btnSavePlot">💾 ದೃಢಪಡಿಸಿ ಉಳಿಸಿ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Selected Zone Quick Info Card -->
+    <section class="m-card" id="sec-zone-summary">
+      <h2>📌 <span data-i18n="lblTapZoneHint">ವಲಯವನ್ನು ಕ್ಲಿಕ್ ಮಾಡಿ ವಿವರ ನೋಡಿ</span></h2>
+      <div id="zone-inline-hint" class="m-mut" data-i18n="txtTapZoneDesc">
+        ನಕ್ಷೆಯಲ್ಲಿರುವ ಯಾವುದೇ ವಲಯವನ್ನು (A1, A2...) ಟ್ಯಾಪ್ ಮಾಡಿ ಮಣ್ಣು, ನೀರು, ಬೆಳೆ ಅಪಾಯ ಮತ್ತು ಸೆನ್ಸಾರ್ ಮಾಪನ ಸೇರಿಸಿ.
+      </div>
+    </section>
+
+    <div class="m-back-home-footer">
+      <p data-nav-home="hint">ಮತ್ತೊಂದು ಸೇವೆಯನ್ನು ಬಳಸಲು ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ.</p>
+      <a class="m-btn m-btn-primary m-btn-full" href="index.html" data-nav-home="long">🏠 ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ</a>
+    </div>
+  </main>
+
+  <!-- Zone Inspector & Geotagged Sensor Input Modal -->
+  <div class="modal-backdrop m-hidden" id="zone-modal">
+    <div class="modal-sheet">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h2 style="margin:0;color:var(--g)" id="zm-title">Zone A1</h2>
+        <button class="m-btn" id="zm-close" style="min-height:38px;padding:4px 12px">✕</button>
+      </div>
+      <div id="zm-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div class="m-grid-2" id="zm-metrics" style="margin-bottom:10px"></div>
+      <div id="zm-details" style="font-size:14px;line-height:1.5"></div>
+      <div id="zm-dose" class="m-callout m-callout-ok" style="margin-top:10px;font-size:13px"></div>
+
+      <!-- Add Geotagged Sensor Reading / Field Observation -->
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+        <h3 style="margin:0 0 8px;color:var(--b)" data-i18n="lblAddReading">🔬 ಜಿಯೋಟ್ಯಾಗ್ ಸೆನ್ಸಾರ್ ಮಾಪನ / ವೀಕ್ಷಣೆ ಸೇರಿಸಿ
+        </h3>
+        <div class="m-row">
+          <div>
+            <label class="m-lbl" data-i18n="lblNo3Input">ನೈಟ್ರೇಟ್ NO₃-N (mg/kg · 1:5 ಸಾರ)</label>
+            <input type="number" class="m-input" id="zm-in-no3" placeholder="31" min="0" max="500">
+          </div>
+          <div>
+            <label class="m-lbl" data-i18n="lblPhInput">pH ಮೌಲ್ಯ</label>
+            <input type="number" class="m-input" id="zm-in-ph" placeholder="6.4" step="0.1" min="3" max="11">
+          </div>
+        </div>
+        <div class="m-row" style="margin-top:6px">
+          <div>
+            <label class="m-lbl" data-i18n="lblCalSlope">ಎಲೆಕ್ಟ್ರೋಡ್ ಕ್ಯಾಲಿಬ್ರೇಶನ್ (Nernst %)</label>
+            <input type="number" class="m-input" id="zm-in-cal" value="96" min="50" max="130">
+          </div>
+          <div>
+            <label class="m-lbl" data-i18n="lblWaterObs">ನೀರು / ಬೆಳೆ ವೀಕ್ಷಣೆ</label>
+            <select class="m-input" id="zm-in-obs">
+              <option value="adequate" data-i18n="obsAdequate">ಸಾಮಾನ್ಯ ತೇವಾಂಶ</option>
+              <option value="dry" data-i18n="obsDry">ಒಣ / ನೀರು ಕೊರತೆ</option>
+              <option value="waterlogged" data-i18n="obsWet">ನೀರು ನಿಂತಿದೆ (Waterlogging)</option>
+              <option value="pest" data-i18n="obsPest">ಕೀಟ / ರೋಗ ಲಕ್ಷಣ ಕಂಡಿದೆ</option>
+            </select>
+          </div>
+        </div>
+        <div id="zm-qc-msg" class="m-mut" style="margin-top:6px"></div>
+        <button class="m-btn m-btn-primary m-btn-full" id="zm-save-reading" style="margin-top:8px"
+          data-i18n="btnSaveReading">✓ ಮಾಪನ ಉಳಿಸಿ (QC ಪರಿಶೀಲನೆ)</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="mapping.mjs"></script>
+  <script src="mannu-assistant.js"></script>
+</body>
+
+</html>

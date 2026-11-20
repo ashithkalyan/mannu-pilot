@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="kn">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Mannu · Live Crop Lens</title>
+  <meta name="theme-color" content="#0f682b">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="mannu-shell.css">
+  <style>
+    .cam-wrap {
+      position: relative;
+      background: #111827;
+      border-radius: 14px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+      width: 100%;
+    }
+
+    #cam-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cam-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      gap: 8px;
+      text-align: center;
+      padding: 16px;
+      background: linear-gradient(145deg, #111827, #1f2937);
+    }
+
+    .cam-pill {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.68);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot-live {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9ca3af;
+    }
+
+    .dot-live.on {
+      background: #22c55e;
+    }
+
+    .dot-live.err {
+      background: #ef4444;
+    }
+
+    .preset-strip {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 0 4px;
+    }
+
+    .preset-btn {
+      flex-shrink: 0;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1.5px solid var(--b);
+      background: var(--b-light);
+      color: var(--b);
+      cursor: pointer;
+    }
+
+    .conf-track {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 6px 0;
+    }
+
+    .conf-fill {
+      height: 100%;
+      background: var(--g);
+      border-radius: 999px;
+      transition: width 0.35s;
+    }
+
+    .chat-box {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .chat-msg {
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      max-width: 88%;
+    }
+
+    .chat-msg.user {
+      align-self: flex-end;
+      background: var(--b-light);
+      color: #1e3a8a;
+    }
+
+    .chat-msg.ai {
+      align-self: flex-start;
+      background: var(--g-light);
+      color: #14532d;
+    }
+
+    .case-card {
+      border: 1px solid var(--bd);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      background: #f9fafb;
+    }
+
+    .case-card:hover {
+      background: var(--g-light);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="m-header">
+    <a class="m-hdr-btn m-home-btn" href="index.html" data-nav-home="short">🏠 ಮುಖಪುಟ</a>
+    <h1>Mannu <small data-i18n="headerSub">ಲೈವ್ ದೃಶ್ಯ ಕೃಷಿ ಸಹಾಯಕ</small></h1>
+    <span class="m-net-pill" id="netStatus"></span>
+    <button class="m-hdr-btn" id="langBtn">English</button>
+  </header>
+
+  <main class="m-main">
+    <div class="m-page-intro">
+      <div class="m-page-intro-ico" aria-hidden="true">📸</div>
+      <div>
+        <h2 data-i18n="camTitle">ಬೆಳೆ ಲೈವ್ ತಪಾಸಣೆ</h2>
+        <p data-i18n="introDesc">ಬೆಳೆ ಎಲೆಗಳ ಫೋಟೋ ತೆಗೆಯಿರಿ ಅಥವಾ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ ಲಕ್ಷಣಗಳನ್ನು ಮತ್ತು ಸುರಕ್ಷಿತ ಮುಂದಿನ ಹಂತಗಳನ್ನು ಪಡೆಯಿರಿ.</p>
+      </div>
+    </div>
+    <!-- Camera & Scan Section -->
+    <section class="m-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h2 style="margin:0">📸 <span data-i18n="camTitle">ಬೆಳೆ ಲೈವ್ ತಪಾಸಣೆ</span></h2>
+        <button class="m-btn" id="btn-live-toggle" style="min-height:36px;font-size:12px;padding:4px 10px"
+          data-i18n="btnStartCam">📷 ಕ್ಯಾಮೆರಾ ಆನ್</button>
+      </div>
+
+      <div class="cam-wrap" id="cam-wrap">
+        <video id="cam-video" autoplay playsinline muted></video>
+        <canvas id="cam-canvas" class="m-hidden"></canvas>
+        <div class="cam-placeholder" id="cam-placeholder">
+          <div style="font-size:44px">🌿📷</div>
+          <div id="cam-placeholder-txt" data-i18n="camTapPrompt">ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ ಅಥವಾ ಕೆಳಗಿನ ಮಾದರಿ /
+            ಫೋಟೋ ಬಳಸಿ</div>
+        </div>
+        <div class="cam-pill">
+          <span class="dot-live" id="cam-dot"></span>
+          <span id="cam-status-txt" data-i18n="camStandby">ಸಿದ್ಧವಾಗಿದೆ</span>
+        </div>
+      </div>
+
+      <div class="m-grid-2" style="margin-top:10px">
+        <button class="m-btn m-btn-primary" id="btn-capture">📸 <span data-i18n="btnCapture">ಸ್ಕ್ಯಾನ್
+            ಮಾಡಿ</span></button>
+        <label class="m-btn m-btn-sec" for="file-upload" style="margin:0">📁 <span data-i18n="btnUpload">ಫೋಟೋ
+            ಅಪ್‌ಲೋಡ್</span></label>
+        <button class="m-btn" id="btn-switch">🔄 <span data-i18n="btnSwitchCam">ಕ್ಯಾಮೆರಾ ಬದಲಿಸಿ</span></button>
+        <button class="m-btn" id="btn-voice-ask">🎤 <span data-i18n="btnVoiceAsk">ಧ್ವನಿ ಪ್ರಶ್ನೆ</span></button>
+      </div>
+      <input type="file" id="file-upload" accept="image/*" capture="environment" hidden>
+
+      <!-- Sample Leaf Scan Presets for Instant Testing -->
+      <div style="margin-top:10px">
+        <div class="m-mut" data-i18n="lblPresets">ತ್ವರಿತ ಪರೀಕ್ಷಾ ಮಾದರಿಗಳು (ಕ್ಯಾಮೆರಾ ಇಲ್ಲದಿದ್ದಾಗ):</div>
+        <div class="preset-strip">
+          <button class="preset-btn" data-preset="ragi_blast" data-i18n="preRagi">🌾 ರಾಗಿ ಎಲೆ ಚುಕ್ಕೆ</button>
+          <button class="preset-btn" data-preset="maize_n" data-i18n="preMaize">🌽 ಮೆಕ್ಕೆಜೋಳ N ಕೊರತೆ</button>
+          <button class="preset-btn" data-preset="tomato_blight" data-i18n="preTomato">🍅 ಟೊಮೇಟೊ ಬ್ಲೈಟ್</button>
+        </div>
+      </div>
+
+      <!-- Associate Plot & Zone Context -->
+      <div class="m-row" style="margin-top:8px">
+        <div>
+          <label class="m-lbl" data-i18n="lblPlotAssoc">ಜಮೀನು ಆಯ್ಕೆ</label>
+          <select class="m-input" id="plot-select"></select>
+        </div>
+        <div>
+          <label class="m-lbl" data-i18n="lblZoneAssoc">ವಲಯ (ಐಚ್ಛಿಕ)</label>
+          <input type="text" class="m-input" id="zone-input" placeholder="A1">
+        </div>
+      </div>
+    </section>
+
+    <!-- Structured Investigation Result -->
+    <section class="m-card m-hidden" id="panel-result">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <img id="cap-thumb" src="" alt="Scanned leaf"
+          style="width:84px;height:66px;border-radius:10px;object-fit:cover;border:1.5px solid var(--bd)">
+        <div style="flex:1">
+          <div style="font-size:18px;font-weight:800;color:var(--g)" id="res-crop">--</div>
+          <div class="m-mut" id="res-meta">--</div>
+        </div>
+        <button class="m-btn m-btn-sec" id="btn-speak-res" style="min-height:40px;padding:6px 10px">🔊 <span
+            data-i18n="btnListen">ಕೇಳಿ</span></button>
+      </div>
+
+      <div id="res-loading" class="m-callout m-callout-info m-hidden" data-i18n="msgAnalyzing">
+        ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ... ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ.
+      </div>
+
+      <div id="res-body">
+        <h3 data-i18n="lblSymptoms">🔍 ಕಂಡುಬಂದ ಲಕ್ಷಣಗಳು</h3>
+        <ul id="res-symptoms" style="margin:4px 0 10px;padding-left:18px;font-size:14px"></ul>
+
+        <h3 data-i18n="lblCauses">⚠️ ಸಂಭಾವ್ಯ ಕಾರಣಗಳು (ಪ್ರಮಾಣಿತವಲ್ಲ - ಅಂದಾಜು)</h3>
+        <div id="res-causes" style="font-size:14px"></div>
+
+        <h3 data-i18n="lblConf">📊 ದೃಢೀಕರಣ ಮಟ್ಟ</h3>
+        <div class="conf-track">
+          <div class="conf-fill" id="res-conf-bar" style="width:0%"></div>
+        </div>
+        <div class="m-mut" id="res-conf-txt">0%</div>
+
+        <div class="m-grid-2" style="margin-top:10px;font-size:13px">
+          <div class="m-callout m-callout-ok" style="margin:0"><strong data-i18n="lblSupEv">ಪೂರಕ ಪುರಾವೆ:</strong>
+            <div id="res-sup-ev"></div>
+          </div>
+          <div class="m-callout" style="margin:0"><strong data-i18n="lblMisEv">ಕೊರತೆಯ ಮಾಹಿತಿ:</strong>
+            <div id="res-mis-ev"></div>
+          </div>
+        </div>
+
+        <h3 data-i18n="lblNextSteps">✅ ಸುರಕ್ಷಿತ ಮುಂದಿನ ಹಂತಗಳು</h3>
+        <ol id="res-steps" style="margin:4px 0 10px;padding-left:20px;font-size:14px"></ol>
+
+        <div class="m-callout m-callout-err" style="font-size:13px" data-i18n="safetyGuard">
+          ಸುರಕ್ಷತಾ ಸೂಚನೆ: ರಾಸಾಯನಿಕ ಕೀಟನಾಶಕ ಪ್ರಮಾಣವನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ನೀಡಲಾಗುವುದಿಲ್ಲ. ದೃಢೀಕರಣಕ್ಕಾಗಿ ಸ್ಥಳೀಯ KVK ಕೃಷಿ
+          ತಜ್ಞರನ್ನು ಸಂಪರ್ಕಿಸಿ.
+        </div>
+
+        <!-- Educational Visual Diagram Generator (System C) -->
+        <div class="m-row" style="margin-top:10px">
+          <button class="m-btn m-btn-sec" id="btn-gen-diagram">🎨 <span data-i18n="btnGenDiagram">ದೃಶ್ಯ ವಿವರಣೆ ಚಿತ್ರ
+              ರಚಿಸಿ</span></button>
+          <button class="m-btn m-btn-primary" id="btn-save-case">💾 <span data-i18n="btnSaveCase">ದಾಖಲೆಯಲ್ಲಿ
+              ಉಳಿಸಿ</span></button>
+        </div>
+
+        <div id="diagram-box" class="m-hidden"
+          style="margin-top:12px;border:1.5px solid var(--b);border-radius:14px;padding:10px;background:#fff">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <strong style="color:var(--b);font-size:14px" data-i18n="lblVisualExpTitle">🎨 ಶೈಕ್ಷಣಿಕ ದೃಶ್ಯ ವಿವರಣೆ (AI +
+              ದೃಢೀಕೃತ ಪಠ್ಯ)</strong>
+            <button class="m-btn" id="btn-dl-diagram" style="min-height:34px;font-size:12px;padding:4px 10px"
+              data-i18n="btnDlSvg">⬇ ಡೌನ್‌ಲೋಡ್</button>
+          </div>
+          <div id="diagram-svg-host"></div>
+        </div>
+      </div>
+
+      <!-- Follow-up Conversation -->
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+        <h3 style="margin:0 0 6px" data-i18n="lblFollowUp">💬 ಮುಂದಿನ ಪ್ರಶ್ನೆ ಕೇಳಿ</h3>
+        <div class="chat-box" id="chat-box"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="m-input" id="chat-input" data-i18n-ph="phChat" placeholder="ಪ್ರಶ್ನೆ ಬರೆಯಿರಿ...">
+          <button class="m-btn m-btn-sec" id="btn-chat-mic" style="min-width:48px">🎤</button>
+          <button class="m-btn m-btn-primary" id="btn-chat-send" style="min-width:60px">➤</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Case Memory & Outcome History -->
+    <section class="m-card">
+      <h2>📚 <span data-i18n="lblCaseMem">ಹಿಂದಿನ ತಪಾಸಣೆಗಳು ಮತ್ತು ಫಲಿತಾಂಶ (Case Memory)</span></h2>
+      <div id="case-list"></div>
+    </section>
+
+    <div class="m-back-home-footer">
+      <p data-nav-home="hint">ಮತ್ತೊಂದು ಸೇವೆಯನ್ನು ಬಳಸಲು ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ.</p>
+      <a class="m-btn m-btn-primary m-btn-full" href="index.html" data-nav-home="long">🏠 ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ</a>
+    </div>
+  </main>
+
+  <script type="module" src="live.mjs"></script>
+  <script src="mannu-assistant.js"></script>
+</body>
+
+</html>
