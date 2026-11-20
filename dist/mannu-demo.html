@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="kn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mannu · ಮಣ್ಣು</title><meta name="theme-color" content="#137333">
+<style>
+:root{--g:#137333;--b:#1967d2;--r:#c5221f;--y:#fbbc04;--bg:#f6f8f6;--tx:#202124;--mut:#5f6368;--bd:#dadce0}
+*{box-sizing:border-box}body{margin:0;font:18px/1.45 "Noto Sans Kannada","Nirmala UI",system-ui,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:40px}
+header{background:var(--g);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header h1{font-size:22px;margin:0;flex:1}header small{display:block;font-weight:400;font-size:13px;opacity:.9}
+.badge{font-size:12px;background:#fff3;border-radius:10px;padding:2px 8px}
+main{max-width:640px;margin:0 auto;padding:12px}
+section{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:14px;margin:12px 0}
+h2{font-size:17px;margin:0 0 10px;color:var(--g)}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 0;min-width:90px}
+button,.btn,select,input{font:inherit;min-height:48px;border-radius:12px;border:1.5px solid var(--bd);padding:8px 12px;background:#fff;color:var(--tx)}
+button,.btn{cursor:pointer;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+.sel{border-color:var(--g);background:#e6f4ea;font-weight:700}
+.primary{background:var(--g);color:#fff;border:0;width:100%;font-size:20px;font-weight:700;min-height:56px}
+.sec{background:var(--b);color:#fff;border:0}.mut{color:var(--mut);font-size:14px}.warn{background:#fef7e0;border:1px solid #f0d27a;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:15px}
+.err{background:#fce8e6;border-color:#f3b4ae}label{display:block;font-size:15px;color:var(--mut);margin:8px 0 4px}
+.n3{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}.n3 b{grid-column:1/-1;margin-top:6px}
+.step{border-left:5px solid var(--g);padding:6px 10px;margin:10px 0;background:#f8fbf8;border-radius:8px}.step h3{margin:0 0 6px;font-size:16px}
+.prods{display:flex;gap:10px;flex-wrap:wrap}.p{text-align:center;min-width:92px}.p .icons{min-height:40px}.p b{display:block;font-size:15px}.p span{font-size:15px}
+.bag{margin:0 1px}.tot{font-weight:700;font-size:18px}pre{white-space:pre-wrap;font:15px/1.5 inherit;background:#f1f3f4;border-radius:10px;padding:10px;margin:8px 0}
+.good{color:var(--g);font-weight:700}.bad{color:var(--r);font-weight:700}
+</style></head>
+<body><header><h1 id="appname">Mannu<small id="tag"></small></h1><span class="badge" id="net"></span><button id="langBtn" data-act="lang" style="min-height:40px">EN</button></header>
+<main id="app"></main>
+<script>
+(() => {
+  // engine/norms.mjs
+  var norms_default = {
+    version: "2026.11-pilot",
+    fertilisers: {
+      urea: { N: 0.46, bagKg: 45, price: 242, priceStatus: "verified-2026-06 (MRP per 45 kg bag)" },
+      dap: { N: 0.18, P2O5: 0.46, bagKg: 50, price: 1350, priceStatus: "verified-2026-06 (per 50 kg bag)" },
+      mop: { K2O: 0.6, bagKg: 50, price: 1700, priceStatus: "estimate: confirm at your retailer" }
+    },
+    soilClasses: {
+      N: { low: 280, high: 560, unit: "kg/ha", method: "alkaline KMnO4" },
+      P: { low: 10, high: 25, unit: "kg/ha", method: "Olsen" },
+      K: { low: 120, high: 280, unit: "kg/ha", method: "NH4OAc" },
+      source: "ICAR-IISS Soil Health Card reading guide"
+    },
+    classMultiplier: {
+      low: 1.25,
+      medium: 1,
+      high: 0.75,
+      source: "ICAR, Indian Farming Mar 2020: doses raised/lowered by 25% of general recommended dose for low/high soil-test category"
+    },
+    crops: {
+      ragi: { name: { en: "Finger millet (ragi)", kn: "\u0CB0\u0CBE\u0C97\u0CBF" }, systems: {
+        rainfed: {
+          status: "verified-literature",
+          rdf: { N: 50, P2O5: 40, K2O: 25 },
+          fymTha: 7.5,
+          split: [{ id: "basal", fracN: 0.5, dasFrom: 0, dasTo: 0 }, { id: "top1", fracN: 0.5, dasFrom: 25, dasTo: 30 }],
+          sources: ["UAS(B)/ICAR-IIMR package of practices, finger millet (Karnataka): rainfed 50:40:25 + 7.5 t FYM/ha"]
+        },
+        irrigated: {
+          status: "verified-literature",
+          rdf: { N: 100, P2O5: 50, K2O: 50 },
+          fymTha: 7.5,
+          split: [{ id: "basal", fracN: 0.5, dasFrom: 0, dasTo: 0 }, { id: "top1", fracN: 0.25, dasFrom: 25, dasTo: 30 }, { id: "top2", fracN: 0.25, dasFrom: 40, dasTo: 45 }],
+          sources: ["UAS(B)/ICAR-IIMR package of practices, finger millet: irrigated 100:50:50; N 50% basal, rest in two splits"]
+        }
+      } },
+      maize: { name: { en: "Maize", kn: "\u0CAE\u0CC6\u0C95\u0CCD\u0C95\u0CC6\u0C9C\u0CCB\u0CB3" }, systems: {
+        irrigated: {
+          status: "verified-literature",
+          rdf: { N: 150, P2O5: 75, K2O: 40 },
+          fymTha: 0,
+          split: [{ id: "basal", fracN: 0.5, dasFrom: 0, dasTo: 0 }, { id: "top1", fracN: 0.5, dasFrom: 28, dasTo: 32 }],
+          sources: ["UAS(B) package of practices, maize: 150:75:40; 50% N + all P,K basal, rest N at ~30 DAS (some trials use 150:75:50 and thirds)"]
+        },
+        rainfed: { status: "pending-verification", note: "Rainfed maize dose not confirmed from a Karnataka source yet." }
+      } },
+      tomato: { name: { en: "Tomato", kn: "\u0C9F\u0CCA\u0CAE\u0CC6\u0C9F\u0CCA" }, systems: {
+        irrigated: {
+          status: "pending-verification",
+          note: "Published recommendations conflict (120:80:50, 115:100:60, 180:100:60 hybrid, 250:250:250 cited for Kolar). Confirm with KVK / UAS(B) horticulture officer.",
+          range: "N 115-250, P2O5 80-250, K2O 50-250 kg/ha (sources disagree)"
+        },
+        rainfed: { status: "pending-verification", note: "Not applicable / not confirmed." }
+      } }
+    }
+  };
+
+  // engine/i18n.mjs
+  var T = {
+    en: {
+      app: "Mannu",
+      tagline: "The right fertiliser for your soil",
+      crop: "Crop",
+      ragi: "Ragi",
+      maize: "Maize",
+      tomato: "Tomato",
+      rainfed: "Rainfed",
+      irrigated: "Irrigated",
+      water: "Water",
+      area: "Land (acres)",
+      acre: "acre",
+      soil: "Soil Health Card details",
+      low: "Low",
+      medium: "Medium",
+      high: "High",
+      unknown: "Don't know",
+      N: "Nitrogen (N)",
+      P: "Phosphorus (P)",
+      K: "Potash (K)",
+      habit: "What you usually apply (per acre)",
+      urea: "Urea",
+      dap: "DAP",
+      mop: "Potash (MOP)",
+      bag: "bag(s)",
+      kg: "kg",
+      plan: "Get advice",
+      speak: "Speak",
+      photo: "Card photo",
+      read: "Read aloud",
+      share: "Share on WhatsApp",
+      sowing: "At sowing",
+      after: "After {a}-{b} days",
+      cost: "Cost",
+      saving: "Saving vs your usual",
+      extra: "More than your usual",
+      fym: "Farmyard manure: about {t} tonnes per acre",
+      perAcre: "per acre",
+      rain: "Heavy rain is likely. Apply top-dressing after the rain stops.",
+      kvk: "Confirm with your nearest KVK before buying.",
+      unverified: "A confirmed recommendation for this crop is not ready yet. Please contact your nearest KVK.",
+      readingWorth: "A \u20B9{c} soil reading could save about \u20B9{v} per acre of fertiliser. Ask your FPO agent.",
+      readingNo: "A soil reading is not needed for this plan.",
+      experimental: "Experimental: soil reading used with unvalidated limits.",
+      acidic: "Soil is acidic. Ask your KVK about liming.",
+      saline: "Soil may be saline. Ask your KVK.",
+      priceConfirm: "Confirm today's price for: {x}",
+      offline: "Offline mode",
+      disclaimer: "Advice follows ICAR/UAS norms. It is not a guarantee; confirm with your KVK.",
+      pickCrop: "Choose your crop",
+      error: "Something went wrong. Please try again.",
+      total: "Total",
+      plot: "Your plot",
+      outcome: "After harvest: yield (kg per acre)",
+      save: "Save this plot"
+    },
+    kn: {
+      app: "\u0CAE\u0CA3\u0CCD\u0CA3\u0CC1",
+      tagline: "\u0CA8\u0CBF\u0CAE\u0CCD\u0CAE \u0CAE\u0CA3\u0CCD\u0CA3\u0CBF\u0C97\u0CC6 \u0CA4\u0C95\u0CCD\u0C95 \u0C97\u0CCA\u0CAC\u0CCD\u0CAC\u0CB0",
+      crop: "\u0CAC\u0CC6\u0CB3\u0CC6",
+      ragi: "\u0CB0\u0CBE\u0C97\u0CBF",
+      maize: "\u0CAE\u0CC6\u0C95\u0CCD\u0C95\u0CC6\u0C9C\u0CCB\u0CB3",
+      tomato: "\u0C9F\u0CCA\u0CAE\u0CC6\u0C9F\u0CCA",
+      rainfed: "\u0CAE\u0CB3\u0CC6\u0CAF\u0CBE\u0CB6\u0CCD\u0CB0\u0CBF\u0CA4",
+      irrigated: "\u0CA8\u0CC0\u0CB0\u0CBE\u0CB5\u0CB0\u0CBF",
+      water: "\u0CA8\u0CC0\u0CB0\u0CC1",
+      area: "\u0C9C\u0CAE\u0CC0\u0CA8\u0CC1 (\u0C8E\u0C95\u0CB0\u0CC6)",
+      acre: "\u0C8E\u0C95\u0CB0\u0CC6",
+      soil: "\u0CAE\u0CA3\u0CCD\u0CA3\u0CC1 \u0C86\u0CB0\u0CCB\u0C97\u0CCD\u0CAF \u0C95\u0CBE\u0CB0\u0CCD\u0CA1\u0CCD \u0CAE\u0CBE\u0CB9\u0CBF\u0CA4\u0CBF",
+      low: "\u0C95\u0CA1\u0CBF\u0CAE\u0CC6",
+      medium: "\u0CAE\u0CA7\u0CCD\u0CAF\u0CAE",
+      high: "\u0CB9\u0CC6\u0C9A\u0CCD\u0C9A\u0CC1",
+      unknown: "\u0C97\u0CCA\u0CA4\u0CCD\u0CA4\u0CBF\u0CB2\u0CCD\u0CB2",
+      N: "\u0CB8\u0CBE\u0CB0\u0C9C\u0CA8\u0C95 (N)",
+      P: "\u0CB0\u0C82\u0C9C\u0C95 (P)",
+      K: "\u0CAA\u0CCA\u0C9F\u0CCD\u0CAF\u0CBE\u0CB6\u0CCD (K)",
+      habit: "\u0CA8\u0CC0\u0CB5\u0CC1 \u0CB8\u0CBE\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0C97\u0CBF \u0CB9\u0CBE\u0C95\u0CC1\u0CB5 \u0C97\u0CCA\u0CAC\u0CCD\u0CAC\u0CB0 (\u0C8E\u0C95\u0CB0\u0CC6\u0C97\u0CC6)",
+      urea: "\u0CAF\u0CC2\u0CB0\u0CBF\u0CAF\u0CBE",
+      dap: "\u0CA1\u0CBF\u0C8E\u0CAA\u0CBF (DAP)",
+      mop: "\u0CAA\u0CCA\u0C9F\u0CCD\u0CAF\u0CBE\u0CB6\u0CCD (MOP)",
+      bag: "\u0C9A\u0CC0\u0CB2",
+      kg: "\u0C95\u0CC6\u0C9C\u0CBF",
+      plan: "\u0CB8\u0CB2\u0CB9\u0CC6 \u0CAA\u0CA1\u0CC6\u0CAF\u0CBF\u0CB0\u0CBF",
+      speak: "\u0CAE\u0CBE\u0CA4\u0CA8\u0CBE\u0CA1\u0CBF",
+      photo: "\u0C95\u0CBE\u0CB0\u0CCD\u0CA1\u0CCD \u0CAB\u0CCB\u0C9F\u0CCB",
+      read: "\u0C93\u0CA6\u0CBF \u0CB9\u0CC7\u0CB3\u0CBF",
+      share: "\u0CB5\u0CBE\u0C9F\u0CCD\u0CB8\u0CBE\u0CAA\u0CCD\u200C\u0CA8\u0CB2\u0CCD\u0CB2\u0CBF \u0CB9\u0C82\u0C9A\u0CBF",
+      sowing: "\u0CAC\u0CBF\u0CA4\u0CCD\u0CA4\u0CA8\u0CC6 \u0CB5\u0CC7\u0CB3\u0CC6",
+      after: "{a}\u2013{b} \u0CA6\u0CBF\u0CA8\u0C97\u0CB3 \u0CA8\u0C82\u0CA4\u0CB0",
+      cost: "\u0C96\u0CB0\u0CCD\u0C9A\u0CC1",
+      saving: "\u0CA8\u0CBF\u0CAE\u0CCD\u0CAE \u0CB8\u0CBE\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C96\u0CB0\u0CCD\u0C9A\u0CBF\u0C97\u0CBF\u0C82\u0CA4 \u0C89\u0CB3\u0CBF\u0CA4\u0CBE\u0CAF",
+      extra: "\u0CA8\u0CBF\u0CAE\u0CCD\u0CAE \u0CB8\u0CBE\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C96\u0CB0\u0CCD\u0C9A\u0CBF\u0C97\u0CBF\u0C82\u0CA4 \u0CB9\u0CC6\u0C9A\u0CCD\u0C9A\u0CC1",
+      fym: "\u0C95\u0CCA\u0C9F\u0CCD\u0C9F\u0CBF\u0C97\u0CC6 \u0C97\u0CCA\u0CAC\u0CCD\u0CAC\u0CB0: \u0C8E\u0C95\u0CB0\u0CC6\u0C97\u0CC6 \u0CB8\u0CC1\u0CAE\u0CBE\u0CB0\u0CC1 {t} \u0C9F\u0CA8\u0CCD",
+      perAcre: "\u0C8E\u0C95\u0CB0\u0CC6\u0C97\u0CC6",
+      rain: "\u0CAD\u0CBE\u0CB0\u0CBF \u0CAE\u0CB3\u0CC6 \u0CAC\u0CB0\u0CC1\u0CB5 \u0CB8\u0CBE\u0CA7\u0CCD\u0CAF\u0CA4\u0CC6 \u0C87\u0CA6\u0CC6. \u0CAE\u0CC7\u0CB2\u0CC1\u0C97\u0CCA\u0CAC\u0CCD\u0CAC\u0CB0\u0CB5\u0CA8\u0CCD\u0CA8\u0CC1 \u0CAE\u0CB3\u0CC6 \u0CA8\u0CBF\u0C82\u0CA4 \u0CAE\u0CC7\u0CB2\u0CC6 \u0CB9\u0CBE\u0C95\u0CBF.",
+      kvk: "\u0C96\u0CB0\u0CC0\u0CA6\u0CBF\u0CB8\u0CC1\u0CB5 \u0CAE\u0CC1\u0CA8\u0CCD\u0CA8 \u0CB9\u0CA4\u0CCD\u0CA4\u0CBF\u0CB0\u0CA6 \u0C95\u0CC3\u0CB7\u0CBF \u0CB5\u0CBF\u0C9C\u0CCD\u0C9E\u0CBE\u0CA8 \u0C95\u0CC7\u0C82\u0CA6\u0CCD\u0CB0 (KVK) \u0CA6\u0CB2\u0CCD\u0CB2\u0CBF \u0C96\u0C9A\u0CBF\u0CA4\u0CAA\u0CA1\u0CBF\u0CB8\u0CBF\u0C95\u0CCA\u0CB3\u0CCD\u0CB3\u0CBF.",
+      unverified: "\u0C88 \u0CAC\u0CC6\u0CB3\u0CC6\u0C97\u0CC6 \u0C96\u0C9A\u0CBF\u0CA4 \u0CB6\u0CBF\u0CAB\u0CBE\u0CB0\u0CB8\u0CC1 \u0C87\u0CA8\u0CCD\u0CA8\u0CC2 \u0CB8\u0CBF\u0CA6\u0CCD\u0CA7\u0CB5\u0CBE\u0C97\u0CBF\u0CB2\u0CCD\u0CB2. \u0CA6\u0CAF\u0CB5\u0CBF\u0C9F\u0CCD\u0C9F\u0CC1 \u0CB9\u0CA4\u0CCD\u0CA4\u0CBF\u0CB0\u0CA6 KVK \u0C85\u0CA8\u0CCD\u0CA8\u0CC1 \u0CB8\u0C82\u0CAA\u0CB0\u0CCD\u0C95\u0CBF\u0CB8\u0CBF.",
+      readingWorth: "\u20B9{c} \u0C97\u0CC6 \u0CAE\u0CA3\u0CCD\u0CA3\u0CC1 \u0CAA\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CC6 \u0CAE\u0CBE\u0CA1\u0CBF\u0CB8\u0CBF\u0CA6\u0CB0\u0CC6 \u0C8E\u0C95\u0CB0\u0CC6\u0C97\u0CC6 \u0CB8\u0CC1\u0CAE\u0CBE\u0CB0\u0CC1 \u20B9{v} \u0C97\u0CCA\u0CAC\u0CCD\u0CAC\u0CB0 \u0C89\u0CB3\u0CBF\u0CB8\u0CAC\u0CB9\u0CC1\u0CA6\u0CC1. \u0CA8\u0CBF\u0CAE\u0CCD\u0CAE FPO \u0C8F\u0C9C\u0CC6\u0C82\u0C9F\u0CCD \u0C85\u0CB5\u0CB0\u0CA8\u0CCD\u0CA8\u0CC1 \u0C95\u0CC7\u0CB3\u0CBF.",
+      readingNo: "\u0C88 \u0CB8\u0CB2\u0CB9\u0CC6\u0C97\u0CC6 \u0CAE\u0CA3\u0CCD\u0CA3\u0CC1 \u0CAA\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CC6\u0CAF \u0C85\u0C97\u0CA4\u0CCD\u0CAF\u0CB5\u0CBF\u0CB2\u0CCD\u0CB2.",
+      experimental: "\u0CAA\u0CCD\u0CB0\u0CBE\u0CAF\u0CCB\u0C97\u0CBF\u0C95: \u0CAE\u0CA3\u0CCD\u0CA3\u0CC1 \u0CAA\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CC6\u0CAF \u0CAE\u0CCC\u0CB2\u0CCD\u0CAF\u0CB5\u0CA8\u0CCD\u0CA8\u0CC1 \u0C87\u0CA8\u0CCD\u0CA8\u0CC2 \u0CA6\u0CC3\u0CA2\u0CAA\u0CA1\u0CBF\u0CB8\u0CA6 \u0CAE\u0CBF\u0CA4\u0CBF\u0C97\u0CB3\u0CB2\u0CCD\u0CB2\u0CBF \u0CAC\u0CB3\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6.",
+      acidic: "\u0CAE\u0CA3\u0CCD\u0CA3\u0CC1 \u0C86\u0CAE\u0CCD\u0CB2\u0CC0\u0CAF\u0CB5\u0CBE\u0C97\u0CBF\u0CA6\u0CC6. \u0CB8\u0CC1\u0CA3\u0CCD\u0CA3 \u0CB9\u0CBE\u0C95\u0CC1\u0CB5 \u0CAC\u0C97\u0CCD\u0C97\u0CC6 KVK \u0C85\u0CA8\u0CCD\u0CA8\u0CC1 \u0C95\u0CC7\u0CB3\u0CBF.",
+      saline: "\u0CAE\u0CA3\u0CCD\u0CA3\u0CC1 \u0CB2\u0CB5\u0CA3\u0CAF\u0CC1\u0C95\u0CCD\u0CA4\u0CB5\u0CBE\u0C97\u0CBF\u0CB0\u0CAC\u0CB9\u0CC1\u0CA6\u0CC1. KVK \u0C85\u0CA8\u0CCD\u0CA8\u0CC1 \u0C95\u0CC7\u0CB3\u0CBF.",
+      priceConfirm: "\u0C87\u0C82\u0CA6\u0CBF\u0CA8 \u0CAC\u0CC6\u0CB2\u0CC6 \u0C96\u0C9A\u0CBF\u0CA4\u0CAA\u0CA1\u0CBF\u0CB8\u0CBF: {x}",
+      offline: "\u0C86\u0CAB\u0CCD\u200C\u0CB2\u0CC8\u0CA8\u0CCD \u0CAE\u0CCB\u0CA1\u0CCD",
+      disclaimer: "\u0C88 \u0CB8\u0CB2\u0CB9\u0CC6 ICAR/UAS \u0CB6\u0CBF\u0CAB\u0CBE\u0CB0\u0CB8\u0CC1\u0C97\u0CB3\u0CA8\u0CCD\u0CA8\u0CC1 \u0C86\u0CA7\u0CB0\u0CBF\u0CB8\u0CBF\u0CA6\u0CC6. \u0C87\u0CA6\u0CC1 \u0C96\u0CBE\u0CA4\u0CB0\u0CBF\u0CAF\u0CB2\u0CCD\u0CB2; KVK \u0CAF\u0CB2\u0CCD\u0CB2\u0CBF \u0C96\u0C9A\u0CBF\u0CA4\u0CAA\u0CA1\u0CBF\u0CB8\u0CBF\u0C95\u0CCA\u0CB3\u0CCD\u0CB3\u0CBF.",
+      pickCrop: "\u0CA8\u0CBF\u0CAE\u0CCD\u0CAE \u0CAC\u0CC6\u0CB3\u0CC6 \u0C86\u0CAF\u0CCD\u0C95\u0CC6\u0CAE\u0CBE\u0CA1\u0CBF",
+      error: "\u0C8F\u0CA8\u0CCB \u0CA4\u0CAA\u0CCD\u0CAA\u0CBE\u0CAF\u0CBF\u0CA4\u0CC1. \u0CAE\u0CA4\u0CCD\u0CA4\u0CC6 \u0CAA\u0CCD\u0CB0\u0CAF\u0CA4\u0CCD\u0CA8\u0CBF\u0CB8\u0CBF.",
+      total: "\u0C92\u0C9F\u0CCD\u0C9F\u0CC1",
+      plot: "\u0CA8\u0CBF\u0CAE\u0CCD\u0CAE \u0C9C\u0CAE\u0CC0\u0CA8\u0CC1",
+      outcome: "\u0C95\u0CCA\u0CAF\u0CCD\u0CB2\u0CBF\u0CA8 \u0CA8\u0C82\u0CA4\u0CB0: \u0C87\u0CB3\u0CC1\u0CB5\u0CB0\u0CBF (\u0C8E\u0C95\u0CB0\u0CC6\u0C97\u0CC6 \u0C95\u0CC6\u0C9C\u0CBF)",
+      save: "\u0C88 \u0C9C\u0CAE\u0CC0\u0CA8\u0CA8\u0CCD\u0CA8\u0CC1 \u0C89\u0CB3\u0CBF\u0CB8\u0CBF"
+    }
+  };
+  function t(lang, key, vars = {}) {
+    let s = T[lang] && T[lang][key] || T.en[key] || key;
+    for (const [k, v] of Object.entries(vars)) s = s.replaceAll("{" + k + "}", String(v));
+    return s;
+  }
+
+  // engine/engine.mjs
+  var ACRE_PER_HA = 2.47105;
+  var CL = ["low", "medium", "high"];
+  var DEFAULTS = {
+    // P(plot class | card class): a card is a grid-level estimate, so it only partly describes one plot. Rows = card class, cols = true plot class.
+    cardAgreement: { low: [0.6, 0.35, 0.05], medium: [0.175, 0.65, 0.175], high: [0.05, 0.35, 0.6] },
+    // P(reading class | true class): a plot reading is informative but imperfect. Rows = true class, cols = observed class.
+    sensorLik: { low: [0.7, 0.25, 0.05], medium: [0.15, 0.7, 0.15], high: [0.05, 0.25, 0.7] },
+    // Under-applying costs more than over-applying for N (yield loss); P and K have residual effects.
+    underFactor: { N: 2, P: 1, K: 1 },
+    readingCostInr: 50,
+    nitrateCriticalMgKg: 25
+    // pre-sidedress nitrate test critical value for US corn; NOT validated for ragi/maize in Karnataka.
+  };
+  var r1 = (x) => Math.round(x * 10) / 10;
+  var halfBag = (kg, bagKg) => Math.round(kg / bagKg * 2) / 2;
+  var normalise = (v) => {
+    const s = v.reduce((a, b) => a + b, 0);
+    return v.map((x) => x / s);
+  };
+  function classify(nutrient, value, n = norms_default) {
+    if (value == null || Number.isNaN(Number(value))) return null;
+    const c = n.soilClasses[nutrient];
+    return value < c.low ? "low" : value > c.high ? "high" : "medium";
+  }
+  var priorFor = (cls, agr = DEFAULTS.cardAgreement) => cls ? [...agr[cls]] : [1 / 3, 1 / 3, 1 / 3];
+  function posterior(prior, obsCls, lik = DEFAULTS.sensorLik) {
+    const o = CL.indexOf(obsCls);
+    return normalise(prior.map((p, i) => p * lik[CL[i]][o]));
+  }
+  function decide(post, rdfKgHa, pricePerKg, under, mult = norms_default.classMultiplier) {
+    const m = CL.map((c) => mult[c]);
+    const losses = CL.map((_, j) => post.reduce((s, p, i) => {
+      const d = m[j] - m[i];
+      return s + p * (d >= 0 ? d : -d * under) * rdfKgHa * pricePerKg;
+    }, 0));
+    let best = 1;
+    losses.forEach((l, j) => {
+      if (l < losses[best] - 1e-9) best = j;
+    });
+    return { cls: CL[best], multiplier: m[best], losses };
+  }
+  function valueOfInformation(prior, rdfKgHa, pricePerKg, under, lik = DEFAULTS.sensorLik) {
+    const el0 = Math.min(...decide(prior, rdfKgHa, pricePerKg, under).losses);
+    let ev = 0;
+    for (let s = 0; s < 3; s++) {
+      const ps = prior.reduce((a, p, i) => a + p * lik[CL[i]][s], 0);
+      if (ps <= 0) continue;
+      const post = normalise(prior.map((p, i) => p * lik[CL[i]][s]));
+      ev += ps * Math.min(...decide(post, rdfKgHa, pricePerKg, under).losses);
+    }
+    return Math.max(0, el0 - ev);
+  }
+  var nutrientPrices = (prices, n = norms_default) => ({
+    N: prices.urea / (n.fertilisers.urea.bagKg * n.fertilisers.urea.N),
+    P2O5: prices.dap / (n.fertilisers.dap.bagKg * n.fertilisers.dap.P2O5),
+    K2O: prices.mop / (n.fertilisers.mop.bagKg * n.fertilisers.mop.K2O)
+  });
+  var extractToSoil = (concMgL, { waterMl = 50, soilG = 10 } = {}) => concMgL * waterMl / soilG;
+  function classifyNitrate(no3nMgKg, crit = DEFAULTS.nitrateCriticalMgKg) {
+    if (!Number.isFinite(no3nMgKg)) return null;
+    return no3nMgKg < crit / 2 ? "low" : no3nMgKg < crit ? "medium" : "high";
+  }
+  var median = (a) => {
+    const s = [...a].sort((x, y) => x - y), m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+  function summariseReadings(rows, extract = { waterMl: 50, soilG: 10 }) {
+    const no3 = rows.map((r) => r.no3_n_mgkg != null ? Number(r.no3_n_mgkg) : r.no3_n_mgl_extract != null ? extractToSoil(Number(r.no3_n_mgl_extract), extract) : NaN).filter(Number.isFinite);
+    const col = (k) => rows.map((r) => Number(r[k])).filter(Number.isFinite);
+    const flags = [];
+    if (no3.length < 3) flags.push("few_readings");
+    const med = no3.length ? median(no3) : NaN;
+    if (no3.length >= 3 && med > 0) {
+      const mad = median(no3.map((x) => Math.abs(x - med)));
+      if (mad / med > 0.5) flags.push("noisy");
+    }
+    const moist = col("moisture_pct");
+    if (moist.length && (median(moist) < 10 || median(moist) > 60)) flags.push("moisture_out_of_range");
+    return {
+      n: no3.length,
+      no3nMgKg: Number.isFinite(med) ? r1(med) : null,
+      ph: col("ph").length ? r1(median(col("ph"))) : null,
+      ecDsm: col("ec_dsm").length ? r1(median(col("ec_dsm"))) : null,
+      moisturePct: moist.length ? r1(median(moist)) : null,
+      qcOk: no3.length >= 3 && !flags.includes("noisy"),
+      flags
+    };
+  }
+  var addDays = (iso, d) => {
+    const x = /* @__PURE__ */ new Date(iso + "T00:00:00Z");
+    x.setUTCDate(x.getUTCDate() + d);
+    return x.toISOString().slice(0, 10);
+  };
+  function computePlan(inp, n = norms_default) {
+    const { crop, system, acres = 1, soil = {}, sensor = null, habit = null, sowingDate = null, opts = {} } = inp;
+    const cdef = n.crops[crop];
+    if (!cdef) return { ok: false, reason: "unknown_crop" };
+    const sdef = cdef.systems[system];
+    if (!sdef) return { ok: false, reason: "unknown_system" };
+    if (sdef.status !== "verified-literature" && !opts.allowUnverified) return { ok: false, reason: "norms_unverified", crop, system, note: sdef.note, range: sdef.range };
+    if (!sdef.rdf) return { ok: false, reason: "norms_unverified", crop, system, note: sdef.note };
+    const prices = { urea: n.fertilisers.urea.price, dap: n.fertilisers.dap.price, mop: n.fertilisers.mop.price, ...inp.prices || {} };
+    const unconfirmed = ["urea", "dap", "mop"].filter((k) => !(inp.prices && inp.prices[k] != null) && !String(n.fertilisers[k].priceStatus).startsWith("verified"));
+    const flags = [];
+    const cfg = { ...DEFAULTS, ...opts.assume || {} };
+    const np = nutrientPrices(prices, n);
+    const nut = { N: ["N", "N"], P: ["P", "P2O5"], K: ["K", "K2O"] };
+    const cardCls = {}, post = {}, mult = {}, conf = {}, adj = {};
+    for (const k of ["N", "P", "K"]) {
+      const s = soil[k] || {};
+      cardCls[k] = s.cls || classify(k, s.value, n);
+      post[k] = priorFor(cardCls[k], cfg.cardAgreement);
+    }
+    let sensorCls = null;
+    if (sensor && sensor.no3nMgKg != null) {
+      if (sensor.qcOk === false) flags.push("reading_rejected_qc");
+      else {
+        sensorCls = classifyNitrate(sensor.no3nMgKg, cfg.nitrateCriticalMgKg);
+        post.N = posterior(post.N, sensorCls, cfg.sensorLik);
+        flags.push("experimental_reading");
+      }
+    }
+    for (const k of ["N", "P", "K"]) {
+      const key = nut[k][1];
+      const d = decide(post[k], sdef.rdf[key], np[key], cfg.underFactor[k], n.classMultiplier);
+      mult[k] = d.multiplier;
+      conf[k] = r1(Math.max(...post[k]) * 100) / 100;
+      adj[key] = r1(sdef.rdf[key] * d.multiplier);
+    }
+    const F = n.fertilisers;
+    const dapHa = adj.P2O5 / F.dap.P2O5, nFromDap = dapHa * F.dap.N, mopHa = adj.K2O / F.mop.K2O;
+    const step = (s) => {
+      const nTarget = s.fracN * adj.N;
+      const ureaHa = Math.max(0, (s.dasFrom === 0 ? nTarget - nFromDap : nTarget) / F.urea.N);
+      return { ureaHa, dapHa: s.dasFrom === 0 ? dapHa : 0, mopHa: s.dasFrom === 0 ? mopHa : 0 };
+    };
+    const steps = sdef.split.map((s) => ({ s, ...step(s) }));
+    const ureaTotHa = steps.reduce((a, x) => a + x.ureaHa, 0);
+    const kg = (ha) => r1(ha / ACRE_PER_HA);
+    const item = (ha, bag2) => ({ kg: kg(ha), bags: halfBag(kg(ha), bag2) });
+    const perAcre = { urea: item(ureaTotHa, F.urea.bagKg), dap: item(dapHa, F.dap.bagKg), mop: item(mopHa, F.mop.bagKg), fymTonnes: r1((sdef.fymTha || 0) / ACRE_PER_HA) };
+    const plot = { urea: item(ureaTotHa * acres * ACRE_PER_HA, F.urea.bagKg), dap: item(dapHa * acres * ACRE_PER_HA, F.dap.bagKg), mop: item(mopHa * acres * ACRE_PER_HA, F.mop.bagKg) };
+    const schedule = steps.map((x) => ({
+      id: x.s.id,
+      dasFrom: x.s.dasFrom,
+      dasTo: x.s.dasTo,
+      dueFrom: sowingDate ? addDays(sowingDate, x.s.dasFrom) : null,
+      dueTo: sowingDate ? addDays(sowingDate, x.s.dasTo) : null,
+      perAcre: { urea: item(x.ureaHa, F.urea.bagKg), dap: item(x.dapHa, F.dap.bagKg), mop: item(x.mopHa, F.mop.bagKg) }
+    }));
+    const costPerAcre = Math.round(perAcre.urea.kg * prices.urea / F.urea.bagKg + perAcre.dap.kg * prices.dap / F.dap.bagKg + perAcre.mop.kg * prices.mop / F.mop.bagKg);
+    let habitOut = null;
+    if (habit && (habit.ureaKgAcre != null || habit.dapKgAcre != null)) {
+      const u = Number(habit.ureaKgAcre || 0), d = Number(habit.dapKgAcre || 0), m = Number(habit.mopKgAcre || 0);
+      const hCost = Math.round(u * prices.urea / F.urea.bagKg + d * prices.dap / F.dap.bagKg + m * prices.mop / F.mop.bagKg);
+      const hN = r1(u * F.urea.N + d * F.dap.N);
+      habitOut = { nKgAcre: hN, planNKgAcre: r1(adj.N / ACRE_PER_HA), costPerAcre: hCost, savingPerAcre: hCost - costPerAcre, savingPlot: Math.round((hCost - costPerAcre) * acres) };
+    }
+    let voi = null;
+    if (!sensorCls) {
+      const v = valueOfInformation(post.N, sdef.rdf.N, np.N, cfg.underFactor.N, cfg.sensorLik) / ACRE_PER_HA;
+      voi = { inrPerAcre: Math.round(v), readingCost: cfg.readingCostInr, worthReading: v > cfg.readingCostInr };
+    }
+    if (soil.pH != null) {
+      if (soil.pH < 6) flags.push("acidic");
+      if (soil.pH > 8.5) flags.push("alkaline");
+    }
+    if (soil.EC != null && soil.EC > 4) flags.push("saline");
+    if (unconfirmed.length) flags.push("price_unconfirmed");
+    return {
+      ok: true,
+      version: n.version,
+      crop,
+      system,
+      acres,
+      rdfKgHa: sdef.rdf,
+      adjKgHa: adj,
+      multipliers: mult,
+      classes: { card: cardCls, reading: sensorCls, posterior: post },
+      confidence: conf,
+      perAcre,
+      plot,
+      schedule,
+      cost: { perAcre: costPerAcre, plot: Math.round(costPerAcre * acres), prices, unconfirmedPrices: unconfirmed },
+      habit: habitOut,
+      voi,
+      flags,
+      sources: sdef.sources || []
+    };
+  }
+  function explain(plan2, lang = "kn") {
+    if (!plan2.ok) return t(lang, plan2.reason === "norms_unverified" ? "unverified" : "error");
+    const nm = (k) => t(lang, k), L2 = [];
+    const fmt = (it) => `${it.kg} ${nm("kg")} (${it.bags} ${nm("bag")})`;
+    L2.push(`${nm(plan2.crop)} \xB7 ${plan2.acres} ${nm("acre")} \xB7 ${nm(plan2.system)}`);
+    for (const s of plan2.schedule) {
+      const parts = [];
+      if (s.perAcre.urea.kg > 0) parts.push(`${nm("urea")} ${fmt(s.perAcre.urea)}`);
+      if (s.perAcre.dap.kg > 0) parts.push(`${nm("dap")} ${fmt(s.perAcre.dap)}`);
+      if (s.perAcre.mop.kg > 0) parts.push(`${nm("mop")} ${fmt(s.perAcre.mop)}`);
+      L2.push(`${s.dasFrom === 0 ? nm("sowing") : t(lang, "after", { a: s.dasFrom, b: s.dasTo })} (${nm("perAcre")}): ${parts.join(", ")}`);
+    }
+    L2.push(`${nm("total")} (${nm("perAcre")}): ${nm("urea")} ${fmt(plan2.perAcre.urea)}, ${nm("dap")} ${fmt(plan2.perAcre.dap)}, ${nm("mop")} ${fmt(plan2.perAcre.mop)}`);
+    if (plan2.perAcre.fymTonnes) L2.push(t(lang, "fym", { t: plan2.perAcre.fymTonnes }));
+    L2.push(`${nm("cost")} ${nm("perAcre")}: \u20B9${plan2.cost.perAcre}`);
+    if (plan2.habit) L2.push(plan2.habit.savingPerAcre >= 0 ? `${nm("saving")}: \u20B9${plan2.habit.savingPerAcre} ${nm("perAcre")}` : `${nm("extra")}: \u20B9${-plan2.habit.savingPerAcre} ${nm("perAcre")}`);
+    if (plan2.voi) L2.push(plan2.voi.worthReading ? t(lang, "readingWorth", { c: plan2.voi.readingCost, v: plan2.voi.inrPerAcre }) : nm("readingNo"));
+    if (plan2.flags.includes("experimental_reading")) L2.push(nm("experimental"));
+    if (plan2.flags.includes("acidic")) L2.push(nm("acidic"));
+    if (plan2.flags.includes("saline")) L2.push(nm("saline"));
+    if (plan2.cost.unconfirmedPrices.length) L2.push(t(lang, "priceConfirm", { x: plan2.cost.unconfirmedPrices.map(nm).join(", ") }));
+    L2.push(nm("kvk"));
+    return L2.join("\n");
+  }
+  var KN_DIGITS = "\u0CE6\u0CE7\u0CE8\u0CE9\u0CEA\u0CEB\u0CEC\u0CED\u0CEE\u0CEF";
+  var toAscii = (s) => s.replace(/[೦-೯]/g, (c) => String(KN_DIGITS.indexOf(c)));
+
+  // engine/intent.mjs
+  var W = { "\u0C92\u0C82\u0CA6\u0CC1": 1, "\u0C8E\u0CB0\u0CA1\u0CC1": 2, "\u0CAE\u0CC2\u0CB0\u0CC1": 3, "\u0CA8\u0CBE\u0CB2\u0CCD\u0C95\u0CC1": 4, "\u0C90\u0CA6\u0CC1": 5, "\u0C86\u0CB0\u0CC1": 6, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+  function keywordIntent(text = "") {
+    const s = toAscii(String(text)).toLowerCase();
+    const out = { crop: null, system: null, acres: null };
+    if (/ರಾಗಿ|ragi|finger millet/.test(s)) out.crop = "ragi";
+    else if (/ಮೆಕ್ಕೆ|maize|corn/.test(s)) out.crop = "maize";
+    else if (/ಟೊಮ|tomato/.test(s)) out.crop = "tomato";
+    if (/ನೀರಾವರಿ|ಬೋರ್|irrigat|borewell/.test(s)) out.system = "irrigated";
+    else if (/ಮಳೆ|rainfed|rain-fed|dryland/.test(s)) out.system = "rainfed";
+    const m = s.match(/(\d+(?:\.\d+)?)\s*(?:ಎಕರೆ|acre)/) || s.match(/(?:ಎಕರೆ|acres?)\s*(\d+(?:\.\d+)?)/);
+    if (m) out.acres = Number(m[1]);
+    else {
+      for (const [w, v] of Object.entries(W)) if (new RegExp(w + "\\s*(?:\u0C8E\u0C95\u0CB0\u0CC6|acre)").test(s)) {
+        out.acres = v;
+        break;
+      }
+    }
+    return out;
+  }
+
+  // web/app.mjs
+  var X = {
+    kn: { sample: "\u0CAE\u0CBE\u0CA6\u0CB0\u0CBF \u0CAE\u0CBE\u0CB9\u0CBF\u0CA4\u0CBF (\u0C95\u0CC3\u0CA4\u0C95, \u0CAA\u0CCD\u0CB0\u0CA6\u0CB0\u0CCD\u0CB6\u0CA8\u0C95\u0CCD\u0C95\u0CC6 \u0CAE\u0CBE\u0CA4\u0CCD\u0CB0)", data: "\u0C9C\u0CAE\u0CC0\u0CA8\u0CBF\u0CA8 \u0CAE\u0CBE\u0CB9\u0CBF\u0CA4\u0CBF \u0CAB\u0CC8\u0CB2\u0CCD (\u0C90\u0C9A\u0CCD\u0C9B\u0CBF\u0C95)", sowdate: "\u0CAC\u0CBF\u0CA4\u0CCD\u0CA4\u0CA8\u0CC6 \u0CA6\u0CBF\u0CA8\u0CBE\u0C82\u0C95 (\u0C90\u0C9A\u0CCD\u0C9B\u0CBF\u0C95)", bags: "\u0C9A\u0CC0\u0CB2", ph: "\u0CAE\u0CA3\u0CCD\u0CA3\u0CBF\u0CA8 pH (\u0C90\u0C9A\u0CCD\u0C9B\u0CBF\u0C95)", readings: "\u0C93\u0CA6\u0CC1\u0CB5\u0CBF\u0C95\u0CC6\u0C97\u0CB3\u0CC1: {n} \xB7 \u0CA8\u0CC8\u0C9F\u0CCD\u0CB0\u0CC7\u0C9F\u0CCD-N \u0CAE\u0CA7\u0CCD\u0CAF\u0CAE {v} mg/kg", qcBad: "\u0C97\u0CC1\u0CA3\u0CAE\u0C9F\u0CCD\u0C9F \u0CAA\u0CB0\u0CBF\u0CB6\u0CC0\u0CB2\u0CA8\u0CC6 \u0CB5\u0CBF\u0CAB\u0CB2: \u0C88 \u0CAE\u0CBE\u0CB9\u0CBF\u0CA4\u0CBF \u0CAC\u0CB3\u0CB8\u0CB2\u0CBE\u0C97\u0CC1\u0CB5\u0CC1\u0CA6\u0CBF\u0CB2\u0CCD\u0CB2", parsed: "\u0C95\u0CBE\u0CB0\u0CCD\u0CA1\u0CCD\u200C\u0CA8\u0CBF\u0C82\u0CA6 \u0C93\u0CA6\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6. \u0CA6\u0CAF\u0CB5\u0CBF\u0C9F\u0CCD\u0C9F\u0CC1 \u0CAE\u0CCC\u0CB2\u0CCD\u0CAF\u0C97\u0CB3\u0CA8\u0CCD\u0CA8\u0CC1 \u0CAA\u0CB0\u0CBF\u0CB6\u0CC0\u0CB2\u0CBF\u0CB8\u0CBF.", manual: "\u0CAB\u0CCB\u0C9F\u0CCB \u0C93\u0CA6\u0CB2\u0CC1 \u0C86\u0C97\u0CB2\u0CBF\u0CB2\u0CCD\u0CB2. \u0CAE\u0CCC\u0CB2\u0CCD\u0CAF\u0C97\u0CB3\u0CA8\u0CCD\u0CA8\u0CC1 \u0C95\u0CC8\u0CAF\u0CBF\u0C82\u0CA6 \u0CAD\u0CB0\u0CCD\u0CA4\u0CBF \u0CAE\u0CBE\u0CA1\u0CBF.", heard: "\u0C95\u0CC7\u0CB3\u0CBF\u0CA6\u0CCD\u0CA6\u0CC1", noVoice: "\u0C88 \u0CAB\u0CCB\u0CA8\u0CCD\u200C\u0CA8\u0CB2\u0CCD\u0CB2\u0CBF \u0C95\u0CA8\u0CCD\u0CA8\u0CA1 \u0CA7\u0CCD\u0CB5\u0CA8\u0CBF \u0CB2\u0CAD\u0CCD\u0CAF\u0CB5\u0CBF\u0CB2\u0CCD\u0CB2.", saved: "\u0C89\u0CB3\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6", mine: "\u0CA8\u0CA8\u0CCD\u0CA8 \u0C9C\u0CAE\u0CC0\u0CA8\u0CC1\u0C97\u0CB3\u0CC1", yield: "\u0C87\u0CB3\u0CC1\u0CB5\u0CB0\u0CBF (\u0C8E\u0C95\u0CB0\u0CC6\u0C97\u0CC6 \u0C95\u0CC6\u0C9C\u0CBF)", add: "\u0CB8\u0CC7\u0CB0\u0CBF\u0CB8\u0CBF", export: "\u0CAE\u0CBE\u0CB9\u0CBF\u0CA4\u0CBF \u0CA1\u0CCC\u0CA8\u0CCD\u200C\u0CB2\u0CCB\u0CA1\u0CCD (CSV)", followed: "\u0CB8\u0CB2\u0CB9\u0CC6 \u0CAA\u0CBE\u0CB2\u0CBF\u0CB8\u0CBF\u0CA6\u0CC6", demo: "\u0CAA\u0CCD\u0CB0\u0CA6\u0CB0\u0CCD\u0CB6\u0CA8 \u0C86\u0CB5\u0CC3\u0CA4\u0CCD\u0CA4\u0CBF" },
+    en: { sample: "Sample data (synthetic, demo only)", data: "Field data file (optional)", sowdate: "Sowing date (optional)", bags: "bags", ph: "Soil pH (optional)", readings: "Readings: {n} \xB7 median nitrate-N {v} mg/kg", qcBad: "Quality check failed: this data will not be used", parsed: "Read from the card. Please check the values.", manual: "Could not read the photo. Please type the values.", heard: "Heard", noVoice: "No Kannada voice on this phone.", saved: "Saved", mine: "My plots", yield: "Yield (kg per acre)", add: "Add", export: "Download data (CSV)", followed: "Followed the advice", demo: "Demo version" }
+  };
+  var L = () => S.lang;
+  var tx = (k, v = {}) => {
+    let s = X[L()] && X[L()][k] || X.en[k] || k;
+    for (const [a, b] of Object.entries(v)) s = s.replaceAll("{" + a + "}", b);
+    return s;
+  };
+  var $ = (s, r = document) => r.querySelector(s);
+  var def = { lang: "kn", crop: "ragi", system: "rainfed", acres: 1, soil: { N: {}, P: {}, K: {} }, ph: "", habitUrea: "", habitDap: "", sowing: "", reading: null, readingRows: null, plots: [], plan: null, text: "", online: false };
+  var S = { ...def };
+  try {
+    Object.assign(S, JSON.parse(localStorage.getItem("mannu.v1") || "{}"), { plan: null, text: "", online: false });
+  } catch {
+  }
+  var save = () => {
+    try {
+      localStorage.setItem("mannu.v1", JSON.stringify({ ...S, plan: null, text: "" }));
+    } catch {
+    }
+  };
+  var esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  var COL = { urea: "#34A853", dap: "#4285F4", mop: "#F9AB00" };
+  var bag = (f, c) => `<svg class="bag" viewBox="0 0 30 38" width="30" height="38" aria-hidden="true"><path d="M5 6h20l3 6v22a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V12z" fill="#fff" stroke="${c}" stroke-width="2"/><rect x="3" y="${(35 - 23 * f).toFixed(1)}" width="24" height="${(23 * f).toFixed(1)}" fill="${c}" opacity=".85"/></svg>`;
+  var icons = (n, c) => {
+    let h = "";
+    for (let i = 0; i < Math.floor(n); i++) h += bag(1, c);
+    if (n - Math.floor(n) >= 0.5) h += bag(0.5, c);
+    return h;
+  };
+  var crops = ["ragi", "maize", "tomato"];
+  function view() {
+    const l = L(), nk = (k) => t(l, k), cls = ["unknown", "low", "medium", "high"];
+    const soilRow = (k) => `<b>${nk(k)}</b><div><label for="cls${k}">${nk("soil")}</label><select id="cls${k}">${cls.map((c) => `<option value="${c === "unknown" ? "" : c}" ${(S.soil[k].cls || "") === (c === "unknown" ? "" : c) ? "selected" : ""}>${nk(c)}</option>`).join("")}</select></div><div><label for="val${k}">kg/ha</label><input id="val${k}" type="number" inputmode="decimal" min="0" value="${S.soil[k].value ?? ""}"></div>`;
+    $("#app").innerHTML = `
+  <section><div class="row"><button class="sec" data-act="speak" id="btnSpeak">\u{1F3A4} ${nk("speak")}</button><label class="btn sec" for="fileCard" style="margin:0;color:#fff">\u{1F4F7} ${nk("photo")}</label></div>
+  <input id="fileCard" type="file" accept="image/*" capture="environment" hidden><div class="mut" id="heard"></div></section>
+  <section><h2>${nk("pickCrop")}</h2><div class="row">${crops.map((c) => `<button data-crop="${c}" class="${S.crop === c ? "sel" : ""}">${nk(c)}</button>`).join("")}</div>
+  <label>${nk("water")}</label><div class="row">${["rainfed", "irrigated"].map((w) => `<button data-system="${w}" class="${S.system === w ? "sel" : ""}">${nk(w)}</button>`).join("")}</div>
+  <label for="acres">${nk("area")}</label><input id="acres" type="number" inputmode="decimal" min="0.25" step="0.25" value="${S.acres}"></section>
+  <section><h2>${nk("soil")}</h2><div class="n3">${["N", "P", "K"].map(soilRow).join("")}</div>
+  <label for="ph">${tx("ph")}</label><input id="ph" type="number" step="0.1" value="${S.ph}"></section>
+  <section><h2>${tx("data")}</h2><div class="row"><label class="btn" for="fileData" style="margin:0">\u{1F4C4} CSV / JSON</label><button data-act="sample" id="btnSample">${tx("sample")}</button></div>
+  <input id="fileData" type="file" accept=".csv,.json" hidden><div id="readingInfo" class="mut">${readingInfo()}</div></section>
+  <section><h2>${nk("habit")}</h2><div class="row"><div><label for="hu">${nk("urea")} (${tx("bags")})</label><input id="hu" type="number" inputmode="decimal" min="0" step="0.5" value="${S.habitUrea}"></div>
+  <div><label for="hd">${nk("dap")} (${tx("bags")})</label><input id="hd" type="number" inputmode="decimal" min="0" step="0.5" value="${S.habitDap}"></div></div>
+  <label for="sow">${tx("sowdate")}</label><input id="sow" type="date" value="${S.sowing}"></section>
+  <button class="primary" id="btnPlan" data-act="plan">${nk("plan")}</button><div id="result">${S.plan ? result() : ""}</div>${plots()}
+  <p class="mut">${nk("disclaimer")}</p>`;
+    $("#tag").textContent = nk("tagline");
+    $("#langBtn").textContent = l === "kn" ? "EN" : "\u0C95\u0CA8\u0CCD\u0CA8\u0CA1";
+    $("#net").textContent = S.online ? "\u25CF online" : "\u25CB " + nk("offline");
+    document.documentElement.lang = l;
+  }
+  function readingInfo() {
+    const r = S.reading;
+    if (!r) return "";
+    return r.qcOk ? tx("readings", { n: r.n, v: r.no3nMgKg }) : `<span class="bad">${tx("qcBad")}</span>`;
+  }
+  function result() {
+    const p = S.plan, l = L(), nk = (k) => t(l, k);
+    if (!p.ok) return `<section><div class="warn err">${esc(explain(p, l))}</div>${p.note ? `<p class="mut">${esc(p.note)}</p>` : ""}</section>`;
+    const stage = (s) => (s.dasFrom === 0 ? nk("sowing") : t(l, "after", { a: s.dasFrom, b: s.dasTo })) + (s.dueFrom ? ` (${s.dueFrom} \u2192 ${s.dueTo})` : "");
+    const steps = p.schedule.map((s) => `<div class="step"><h3>${stage(s)} \xB7 ${nk("perAcre")}</h3><div class="prods">${["urea", "dap", "mop"].filter((k) => s.perAcre[k].kg > 0).map((k) => `<div class="p"><div class="icons">${icons(s.perAcre[k].bags, COL[k])}</div><b>${nk(k)}</b><span>${s.perAcre[k].kg} ${nk("kg")}</span></div>`).join("")}</div></div>`).join("");
+    const h = p.habit, notes = [];
+    if (p.weather && p.weather.delayTopdress) notes.push(nk("rain"));
+    if (p.voi) notes.push(p.voi.worthReading ? t(l, "readingWorth", { c: p.voi.readingCost, v: p.voi.inrPerAcre }) : nk("readingNo"));
+    for (const f of ["experimental_reading", "acidic", "saline"]) if (p.flags.includes(f)) notes.push(nk(f === "experimental_reading" ? "experimental" : f));
+    if (p.flags.includes("reading_rejected_qc")) notes.push(tx("qcBad"));
+    if (p.cost.unconfirmedPrices.length) notes.push(t(l, "priceConfirm", { x: p.cost.unconfirmedPrices.map(nk).join(", ") }));
+    const pl = p.plot;
+    return `<section id="plan"><h2>${nk(p.crop)} \xB7 ${p.acres} ${nk("acre")} \xB7 ${nk(p.system)}</h2>${steps}
+  ${p.perAcre.fymTonnes ? `<p>${t(l, "fym", { t: p.perAcre.fymTonnes })}</p>` : ""}
+  <p class="tot">${nk("plot")} (${p.acres} ${nk("acre")}): ${nk("urea")} ${pl.urea.bags} \xB7 ${nk("dap")} ${pl.dap.bags} \xB7 ${nk("mop")} ${pl.mop.bags} ${nk("bag")}</p>
+  <p>${nk("cost")} ${nk("perAcre")}: <b>\u20B9${p.cost.perAcre}</b>${h ? ` \xB7 <span class="${h.savingPerAcre >= 0 ? "good" : "bad"}">${h.savingPerAcre >= 0 ? nk("saving") : nk("extra")}: \u20B9${Math.abs(h.savingPerAcre)}</span>` : ""}</p>
+  ${notes.map((n) => `<div class="warn">${esc(n)}</div>`).join("")}
+  <pre id="adviceText">${esc(S.text)}</pre>
+  <div class="row"><button data-act="read">\u{1F50A} ${nk("read")}</button><button data-act="share">\u{1F4AC} ${nk("share")}</button><button data-act="savePlot">\u{1F4BE} ${nk("save")}</button></div></section>`;
+  }
+  function plots() {
+    if (!S.plots.length) return "";
+    return `<section><h2>${tx("mine")}</h2>${S.plots.map((p, i) => `<div class="warn"><b>${esc(t(L(), p.crop))}</b> \xB7 ${p.acres} ${t(L(), "acre")} \xB7 ${esc(p.date)} \xB7 \u20B9${p.cost}${p.yield ? ` \xB7 ${p.yield} kg` : `<div class="row" style="margin-top:6px"><input data-y="${i}" type="number" placeholder="${tx("yield")}" aria-label="${tx("yield")}"><button data-act="addYield" data-i="${i}">${tx("add")}</button></div>`}</div>`).join("")}<button data-act="export">${tx("export")}</button></section>`;
+  }
+  async function api(path, body, ms = 8e3) {
+    const r = await fetch(path, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(ms) } : { signal: AbortSignal.timeout(ms) });
+    if (!r.ok) throw new Error("http_" + r.status);
+    return r.json();
+  }
+  function collect() {
+    const num = (id) => {
+      const v = $("#" + id).value;
+      return v === "" ? null : Number(v);
+    };
+    for (const k of ["N", "P", "K"]) {
+      S.soil[k] = { cls: $("#cls" + k).value || void 0, value: num("val" + k) ?? void 0 };
+      if (S.soil[k].value != null) S.soil[k].cls = void 0;
+    }
+    S.acres = num("acres") || 1;
+    S.ph = $("#ph").value;
+    S.habitUrea = $("#hu").value;
+    S.habitDap = $("#hd").value;
+    S.sowing = $("#sow").value;
+  }
+  async function plan() {
+    collect();
+    const habit = S.habitUrea !== "" || S.habitDap !== "" ? { ureaKgAcre: Number(S.habitUrea || 0) * norms_default.fertilisers.urea.bagKg, dapKgAcre: Number(S.habitDap || 0) * norms_default.fertilisers.dap.bagKg } : null;
+    const input = { crop: S.crop, system: S.system, acres: S.acres, soil: { ...S.soil, pH: S.ph === "" ? void 0 : Number(S.ph) }, sensor: S.reading, habit, sowingDate: S.sowing || null };
+    let p = computePlan(input);
+    S.text = explain(p, S.lang);
+    if (p.ok && S.online) {
+      try {
+        const pos = await new Promise((res) => navigator.geolocation ? navigator.geolocation.getCurrentPosition((g) => res(g.coords), () => res(null), { timeout: 4e3 }) : res(null));
+        const r = await api("/api/plan", { ...input, lang: S.lang, lat: pos?.latitude, lon: pos?.longitude });
+        if (r.plan && r.plan.ok) {
+          p = r.plan;
+          S.text = r.text;
+        }
+      } catch {
+      }
+    }
+    S.plan = p;
+    save();
+    $("#result").innerHTML = result();
+    $("#result").scrollIntoView?.({ behavior: "smooth" });
+  }
+  function toast(msg) {
+    $("#heard").textContent = msg;
+  }
+  function parseCsv(text) {
+    const [h, ...rest] = text.trim().split(/\r?\n/);
+    const cols = h.split(",").map((c) => c.trim());
+    return rest.filter(Boolean).map((line) => Object.fromEntries(line.split(",").map((v, i) => [cols[i], v.trim() === "" ? void 0 : Number.isNaN(Number(v)) ? v.trim() : Number(v)])));
+  }
+  var SAMPLE = [31, 29, 33, 30, 28, 32, 34, 27, 30, 31, 29, 35].map((v, i) => ({ no3_n_mgkg: v, ph: 6.1 + i % 3 * 0.1, moisture_pct: 28, ts: "demo" }));
+  function setReadings(rows) {
+    S.readingRows = rows;
+    S.reading = summariseReadings(rows);
+    save();
+    $("#readingInfo").innerHTML = readingInfo();
+  }
+  document.addEventListener("click", async (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.crop) {
+      collect();
+      S.crop = b.dataset.crop;
+      if (S.crop === "maize") S.system = "irrigated";
+      S.plan = null;
+      save();
+      view();
+    } else if (b.dataset.system) {
+      collect();
+      S.system = b.dataset.system;
+      S.plan = null;
+      save();
+      view();
+    } else if (b.dataset.act === "lang") {
+      collect();
+      S.lang = S.lang === "kn" ? "en" : "kn";
+      if (S.plan) S.text = explain(S.plan, S.lang);
+      save();
+      view();
+    } else if (b.dataset.act === "plan") plan();
+    else if (b.dataset.act === "sample") setReadings(SAMPLE);
+    else if (b.dataset.act === "read") {
+      const u = new SpeechSynthesisUtterance(S.text);
+      u.lang = S.lang === "kn" ? "kn-IN" : "en-IN";
+      const v = speechSynthesis.getVoices().find((x) => x.lang.toLowerCase().startsWith(S.lang));
+      if (!v && S.lang === "kn") toast(tx("noVoice"));
+      else {
+        if (v) u.voice = v;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      }
+    } else if (b.dataset.act === "share") window.open("https://wa.me/?text=" + encodeURIComponent("Mannu\n" + S.text), "_blank");
+    else if (b.dataset.act === "savePlot" && S.plan?.ok) {
+      S.plots.unshift({ crop: S.plan.crop, acres: S.plan.acres, cost: S.plan.cost.perAcre, date: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10) });
+      save();
+      toast(tx("saved"));
+      const sec = document.querySelector("#app");
+      view();
+      S.plan && ($("#result").innerHTML = result());
+    } else if (b.dataset.act === "addYield") {
+      const v = Number(document.querySelector(`[data-y="${b.dataset.i}"]`).value);
+      if (v > 0) {
+        S.plots[b.dataset.i].yield = v;
+        save();
+        view();
+        if (S.online) api("/api/outcome", { plotId: "plot" + b.dataset.i, crop: S.plots[b.dataset.i].crop, yieldKgAcre: v, followedPlan: true }).catch(() => {
+        });
+      }
+    } else if (b.dataset.act === "export") {
+      const csv = "crop,acres,date,cost_per_acre,yield_kg_acre\n" + S.plots.map((p) => [p.crop, p.acres, p.date, p.cost, p.yield ?? ""].join(",")).join("\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      a.download = "mannu-plots.csv";
+      a.click();
+    } else if (b.dataset.act === "speak") {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return toast(tx("manual"));
+      const rec = new SR();
+      rec.lang = S.lang === "kn" ? "kn-IN" : "en-IN";
+      rec.onresult = async (ev) => {
+        const tr = ev.results[0][0].transcript;
+        toast(tx("heard") + ": " + tr);
+        let it = keywordIntent(tr);
+        if (S.online) {
+          try {
+            it = { ...it, ...await api("/api/intent", { transcript: tr }) };
+          } catch {
+          }
+        }
+        if (it.crop) S.crop = it.crop;
+        if (it.system) S.system = it.system;
+        if (it.acres) S.acres = it.acres;
+        S.plan = null;
+        save();
+        view();
+        toast(tx("heard") + ": " + tr);
+      };
+      rec.start();
+    }
+  });
+  document.addEventListener("change", async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (e.target.id === "fileData") {
+      try {
+        const txt = await f.text();
+        setReadings(f.name.endsWith(".json") ? [].concat(JSON.parse(txt)) : parseCsv(txt));
+      } catch {
+        toast(tx("qcBad"));
+      }
+    }
+    if (e.target.id === "fileCard") {
+      try {
+        const data = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(String(r.result).split(",")[1]);
+          r.onerror = rej;
+          r.readAsDataURL(f);
+        });
+        const j = await api("/api/card/parse", { imageBase64: data, mimeType: f.type || "image/jpeg" }, 3e4);
+        for (const k of ["N", "P", "K"]) if (j.values?.[k] != null) S.soil[k] = { value: j.values[k] };
+        if (j.values?.pH != null) S.ph = j.values.pH;
+        save();
+        view();
+        toast(tx("parsed"));
+      } catch {
+        toast(tx("manual"));
+      }
+    }
+  });
+  (async () => {
+    try {
+      await api("/api/health", null, 1500);
+      S.online = true;
+    } catch {
+      S.online = false;
+    }
+    view();
+  })();
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http") && !location.hostname.endsWith("claude.ai")) navigator.serviceWorker.register("sw.js").catch(() => {
+  });
+})();
+
+</script>
+</body></html>

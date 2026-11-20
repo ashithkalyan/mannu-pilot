@@ -1,0 +1,5 @@
+{ "name": "mannu", "version": "0.1.0", "type": "module", "private": true,
+  "description": "Mannu: voice-first, plot-aware fertiliser decision layer (Gemini + deterministic dose engine)",
+  "scripts": { "test": "node --test test/*.test.mjs", "start": "node server/server.mjs", "build:demo": "node scripts/build-demo.mjs" },
+  "dependencies": { "@google/genai": "^1.0.0", "express": "^4.19.2" },
+  "devDependencies": { "esbuild": "^0.25.0", "jsdom": "^26.0.0" } }
